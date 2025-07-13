@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -160,6 +159,14 @@ All colors MUST be HSL.
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     border: 4px solid white;
     object-fit: cover;
+  }
+
+  /* Hero section poster styling */
+  .poster-hero {
+    padding-top: 40px;
+    width: 90%;
+    max-width: 800px;
+    margin: 0 auto 25px;
   }
 
   /* Mobile responsive poster */
