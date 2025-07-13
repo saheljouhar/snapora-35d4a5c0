@@ -56,7 +56,7 @@ const PhotoGrid = () => {
   const displayPhotos = [...photos];
   if (displayPhotos.length % 2 !== 0) {
     displayPhotos.push({
-      id: 'placeholder',
+      id: -1, // Use -1 as placeholder ID to avoid type conflicts
       url: '',
       likes: 0,
       device: ''
@@ -77,7 +77,7 @@ const PhotoGrid = () => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
       {displayPhotos.map((photo, index) => {
         // Render empty slot for placeholder
-        if (photo.id === 'placeholder') {
+        if (photo.id === -1) {
           return (
             <div 
               key="empty-slot" 
@@ -111,7 +111,7 @@ const PhotoGrid = () => {
                     {photo.device}
                   </span>
                   <button
-                    onClick={() => handleLike(photo.id as number)}
+                    onClick={() => handleLike(photo.id)}
                     className="flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors"
                     style={{ minHeight: '32px' }}
                   >

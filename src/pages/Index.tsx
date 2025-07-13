@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Camera, Heart, Users, Image as ImageIcon } from 'lucide-react';
+import { Camera, Heart, Users, Image as ImageIcon, MessageCircle, Instagram, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PhotoUploadModal from '@/components/PhotoUploadModal';
 import BusinessCard from '@/components/BusinessCard';
@@ -30,11 +30,13 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-pink-100/30 to-white/50" />
         
         <div className="relative z-10 max-w-md mx-auto animate-fade-in">
-          <div className="mb-8 animate-scale-in event-portrait-container">
+          {/* Event Poster Container */}
+          <div className="poster-container mb-8 animate-scale-in">
             <img 
               src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
-              alt="Event Portrait" 
-              className="w-32 h-32 rounded-full mx-auto mb-4 object-cover shadow-lg border-4 border-white"
+              alt="Event Poster" 
+              className="event-poster w-full max-w-sm mx-auto rounded-2xl shadow-2xl border-4 border-white object-cover"
+              style={{ width: '90%', maxWidth: '320px' }}
             />
           </div>
           
@@ -56,6 +58,35 @@ const Index = () => {
               <ImageIcon className="w-4 h-4" />
               <span>Live updates</span>
             </div>
+          </div>
+
+          {/* Social Icons Row */}
+          <div className="flex items-center justify-center gap-6 mb-8">
+            <a
+              href="https://wa.me/1234567890"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <MessageCircle className="w-6 h-6" />
+            </a>
+            <a
+              href="https://instagram.com/momentsphotography"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <Instagram className="w-6 h-6" />
+            </a>
+            <a
+              href="tel:+1234567890"
+              className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <Phone className="w-6 h-6" />
+            </a>
           </div>
         </div>
 

@@ -1,32 +1,10 @@
 
-import { useState } from 'react';
-import { Instagram, MessageCircle, Phone, Heart, Star, Camera } from 'lucide-react';
+import { Instagram, MessageCircle, Phone, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Link } from 'react-router-dom';
 
 const BusinessCard = () => {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    eventType: '',
-    eventDate: ''
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Booking form submitted:', formData);
-    alert('Thank you for your booking request! We will contact you soon.');
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
   return (
     <section className="py-16 px-4 bg-gradient-to-br from-gray-50 to-white">
       <div className="max-w-4xl mx-auto">
@@ -48,11 +26,11 @@ const BusinessCard = () => {
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Our Services</h3>
                   <ul className="space-y-3 text-gray-600">
                     <li className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-rose-500" />
+                      <Camera className="w-4 h-4 text-rose-500" />
                       Wedding Photography
                     </li>
                     <li className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-rose-500" />
+                      <Camera className="w-4 h-4 text-rose-500" />
                       Corporate Events
                     </li>
                     <li className="flex items-center gap-2">
@@ -60,11 +38,11 @@ const BusinessCard = () => {
                       Birthday Celebrations
                     </li>
                     <li className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-rose-500" />
+                      <Camera className="w-4 h-4 text-rose-500" />
                       Engagement Parties
                     </li>
                     <li className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-rose-500" />
+                      <Camera className="w-4 h-4 text-rose-500" />
                       Graduation Ceremonies
                     </li>
                   </ul>
@@ -82,86 +60,30 @@ const BusinessCard = () => {
                 </div>
               </div>
 
-              {/* Booking Form */}
-              <div className="bg-gradient-to-r from-gray-50 to-rose-50 rounded-2xl p-6 mb-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
-                  Book Your Event!
+              {/* Book Your Event CTA */}
+              <div className="bg-gradient-to-r from-gray-50 to-rose-50 rounded-2xl p-6 mb-6 text-center">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  Ready to Book Your Event?
                 </h3>
+                <p className="text-gray-600 mb-6">
+                  Let us capture your special moments with our professional photo-sharing experience.
+                </p>
                 
-                <form className="booking-form space-y-4" onSubmit={handleSubmit}>
-                  <div>
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      placeholder="Full Name"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="Phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="eventType">Event Type</Label>
-                    <select
-                      id="eventType"
-                      name="eventType"
-                      value={formData.eventType}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1 w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      <option value="">Event Type</option>
-                      <option value="wedding">Wedding</option>
-                      <option value="corporate">Corporate</option>
-                      <option value="birthday">Birthday</option>
-                      <option value="engagement">Engagement</option>
-                      <option value="graduation">Graduation</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="eventDate">Event Date</Label>
-                    <Input
-                      id="eventDate"
-                      name="eventDate"
-                      type="date"
-                      value={formData.eventDate}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-                  
+                <Link to="/booking">
                   <Button
-                    type="submit"
                     className="cta-button bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     style={{ 
                       width: '90%', 
                       maxWidth: '300px', 
                       margin: '8px auto',
-                      display: 'block'
+                      display: 'block',
+                      minHeight: '48px',
+                      fontSize: '16px'
                     }}
                   >
-                    Submit
+                    Book Your Event!
                   </Button>
-                </form>
+                </Link>
               </div>
 
               {/* Contact Links */}

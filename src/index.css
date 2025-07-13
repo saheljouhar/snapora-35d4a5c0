@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -144,11 +145,29 @@ All colors MUST be HSL.
     z-index: 100;
   }
 
-  /* Event portrait container */
-  .event-portrait-container {
+  /* Event poster container */
+  .poster-container {
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  .event-poster {
+    width: 90%;
+    max-width: 320px;
+    height: auto;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 4px solid white;
+    object-fit: cover;
+  }
+
+  /* Mobile responsive poster */
+  @media (max-width: 480px) {
+    .event-poster {
+      width: 90%;
+      max-width: 280px;
+    }
   }
 
   /* Empty slot styling */
