@@ -1,16 +1,14 @@
 
 import { useState } from 'react';
-import { Camera, Upload, Heart, Instagram, MessageCircle, Download, Users, Image as ImageIcon } from 'lucide-react';
+import { Camera, Heart, Users, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import PhotoUploadModal from '@/components/PhotoUploadModal';
 import BusinessCard from '@/components/BusinessCard';
-import AdminDashboard from '@/components/AdminDashboard';
 import PhotoGrid from '@/components/PhotoGrid';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showAdmin, setShowAdmin] = useState(false);
   const [uploadCount, setUploadCount] = useState(127); // Demo count
 
   const handlePhotoUpload = () => {
@@ -32,8 +30,12 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-pink-100/30 to-white/50" />
         
         <div className="relative z-10 max-w-md mx-auto animate-fade-in">
-          <div className="mb-8 animate-scale-in">
-            <Heart className="w-16 h-16 text-rose-500 mx-auto mb-4 animate-pulse" />
+          <div className="mb-8 animate-scale-in event-portrait-container">
+            <img 
+              src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+              alt="Event Portrait" 
+              className="w-32 h-32 rounded-full mx-auto mb-4 object-cover shadow-lg border-4 border-white"
+            />
           </div>
           
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 leading-tight">
@@ -60,10 +62,15 @@ const Index = () => {
         {/* Floating Action Button */}
         <button
           onClick={() => setShowUploadModal(true)}
-          className="fab fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-50 flex items-center gap-3 px-8 py-4 text-lg font-semibold min-h-[56px]"
-          style={{ minWidth: '48px', minHeight: '48px' }}
+          className="action-button fab fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-50 flex items-center gap-3"
+          style={{ 
+            width: '120px', 
+            height: '40px', 
+            fontSize: '14px', 
+            padding: '8px 12px'
+          }}
         >
-          <Camera className="w-6 h-6" />
+          <Camera className="w-4 h-4" />
           <span className="hidden sm:inline">Add Photos</span>
         </button>
       </header>
@@ -72,7 +79,7 @@ const Index = () => {
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Wedding Memories</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Event Memories</h2>
             <p className="text-gray-600">Beautiful moments captured by our guests</p>
           </div>
           <PhotoGrid />
@@ -82,16 +89,23 @@ const Index = () => {
       {/* Business Card Section */}
       <BusinessCard />
 
-      {/* Admin Link */}
-      <div className="fixed top-4 right-4 z-40">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowAdmin(!showAdmin)}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          Admin
-        </Button>
+      {/* Admin Link - Fixed bottom-right */}
+      <div className="fixed bottom-5 right-5 z-[100]" id="admin-btn">
+        <Link to="/admin">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="action-button text-gray-400 hover:text-gray-600 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
+            style={{ 
+              width: '120px', 
+              height: '40px', 
+              fontSize: '14px', 
+              padding: '8px 12px'
+            }}
+          >
+            Admin
+          </Button>
+        </Link>
       </div>
 
       {/* Modals */}
@@ -100,13 +114,6 @@ const Index = () => {
         onClose={() => setShowUploadModal(false)}
         onUpload={handlePhotoUpload}
       />
-
-      {showAdmin && (
-        <AdminDashboard 
-          uploadCount={uploadCount}
-          onClose={() => setShowAdmin(false)}
-        />
-      )}
     </div>
   );
 };
