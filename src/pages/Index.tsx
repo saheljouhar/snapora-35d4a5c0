@@ -19,7 +19,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
       {/* Header */}
-      <header className="relative h-screen flex flex-col items-center justify-center px-4 text-center overflow-hidden">
+      <header className="hero-section relative h-screen flex flex-col items-center justify-center px-4 text-center overflow-hidden">
         {/* Background Image Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
@@ -31,7 +31,7 @@ const Index = () => {
         
         <div className="relative z-10 max-w-md mx-auto animate-fade-in">
           {/* Event Poster Container */}
-          <div className="poster-container mb-8 animate-scale-in">
+          <div className="poster-container poster-hero mb-8 animate-scale-in">
             <img 
               src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
               alt="Event Poster" 
@@ -60,8 +60,8 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Social Icons Row */}
-          <div className="flex items-center justify-center gap-6 mb-8">
+          {/* Social Icons Row - Hidden in hero section via CSS */}
+          <div className="social-icons flex items-center justify-center gap-6 mb-8">
             <a
               href="https://wa.me/1234567890"
               target="_blank"
@@ -117,24 +117,37 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Business Card Section */}
-      <BusinessCard />
+      {/* Business Card Section with Social Icons */}
+      <div className="relative">
+        {/* Social Icons in 3rd Section */}
+        <div className="social-container">
+          <a href="https://wa.me/1234567890" target="_blank" rel="noopener noreferrer">
+            <MessageCircle className="w-9 h-9 text-green-500 hover:text-green-600 transition-colors" />
+          </a>
+          <a href="https://instagram.com/momentsphotography" target="_blank" rel="noopener noreferrer">
+            <Instagram className="w-9 h-9 text-purple-500 hover:text-purple-600 transition-colors" />
+          </a>
+          <a href="tel:+1234567890">
+            <Phone className="w-9 h-9 text-blue-500 hover:text-blue-600 transition-colors" />
+          </a>
+        </div>
+        <BusinessCard />
+      </div>
 
-      {/* Admin Link - Fixed bottom-right */}
+      {/* Admin Link - Fixed bottom-right with updated styling */}
       <div className="fixed bottom-5 right-5 z-[100]" id="admin-btn">
         <Link to="/admin">
           <Button
             variant="ghost"
             size="sm"
-            className="action-button text-gray-400 hover:text-gray-600 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
+            className="w-full h-full text-white hover:text-gray-200 bg-transparent hover:bg-transparent"
             style={{ 
-              width: '120px', 
-              height: '40px', 
-              fontSize: '14px', 
-              padding: '8px 12px'
+              width: '50px', 
+              height: '50px',
+              padding: '0'
             }}
           >
-            Admin
+            A
           </Button>
         </Link>
       </div>

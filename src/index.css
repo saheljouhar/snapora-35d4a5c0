@@ -136,12 +136,22 @@ All colors MUST be HSL.
     margin: 8px auto;
   }
 
-  /* Admin button positioning */
+  /* Admin button positioning - Updated with fixed styling */
   #admin-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 100;
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 9999 !important;
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 50% !important;
+    background: hsl(210 11% 18%) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+    border: none !important;
   }
 
   /* Event poster container */
@@ -161,12 +171,29 @@ All colors MUST be HSL.
     object-fit: cover;
   }
 
-  /* Hero section poster styling */
+  /* Hero section poster styling - Updated with fixes */
   .poster-hero {
-    padding-top: 40px;
+    padding-top: 40px !important;
     width: 90%;
     max-width: 800px;
-    margin: 0 auto 25px;
+    margin: 0 auto 30px !important;
+  }
+
+  /* Hide social icons in hero section */
+  .hero-section .social-icons {
+    display: none !important;
+  }
+
+  /* Social icons container for 3rd section */
+  .social-container {
+    margin: 30px auto;
+    text-align: center;
+    padding: 15px 0;
+  }
+
+  .social-container a {
+    margin: 0 10px;
+    display: inline-block;
   }
 
   /* Mobile responsive poster */
