@@ -86,55 +86,32 @@ const BusinessCard = () => {
                 </Link>
               </div>
 
-              {/* Contact Links */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {/* Social Icons */}
+              <div className="flex items-center justify-center gap-6 mb-8">
                 <a
                   href="https://wa.me/1234567890"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="cta-button flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 hover:scale-105 shadow-lg"
-                  style={{ 
-                    width: '90%', 
-                    maxWidth: '300px', 
-                    margin: '8px auto',
-                    minHeight: '48px',
-                    padding: '12px 24px'
-                  }}
+                  className="p-3 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+                  style={{ minWidth: '48px', minHeight: '48px' }}
                 >
-                  <MessageCircle className="w-5 h-5" />
-                  WhatsApp
+                  <MessageCircle className="w-6 h-6" />
                 </a>
-
                 <a
                   href="https://instagram.com/momentsphotography"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="cta-button flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full transition-all duration-300 hover:scale-105 shadow-lg"
-                  style={{ 
-                    width: '90%', 
-                    maxWidth: '300px', 
-                    margin: '8px auto',
-                    minHeight: '48px',
-                    padding: '12px 24px'
-                  }}
+                  className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+                  style={{ minWidth: '48px', minHeight: '48px' }}
                 >
-                  <Instagram className="w-5 h-5" />
-                  Instagram
+                  <Instagram className="w-6 h-6" />
                 </a>
-
                 <a
                   href="tel:+1234567890"
-                  className="cta-button flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all duration-300 hover:scale-105 shadow-lg"
-                  style={{ 
-                    width: '90%', 
-                    maxWidth: '300px', 
-                    margin: '8px auto',
-                    minHeight: '48px',
-                    padding: '12px 24px'
-                  }}
+                  className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+                  style={{ minWidth: '48px', minHeight: '48px' }}
                 >
-                  <Phone className="w-5 h-5" />
-                  Call Now
+                  <Phone className="w-6 h-6" />
                 </a>
               </div>
             </div>

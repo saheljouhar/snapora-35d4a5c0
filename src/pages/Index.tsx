@@ -59,35 +59,6 @@ const Index = () => {
               <span>Live updates</span>
             </div>
           </div>
-
-          {/* Social Icons Row - Hidden in hero section via CSS */}
-          <div className="social-icons flex items-center justify-center gap-6 mb-8">
-            <a
-              href="https://wa.me/1234567890"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
-              style={{ minWidth: '48px', minHeight: '48px' }}
-            >
-              <MessageCircle className="w-6 h-6" />
-            </a>
-            <a
-              href="https://instagram.com/momentsphotography"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
-              style={{ minWidth: '48px', minHeight: '48px' }}
-            >
-              <Instagram className="w-6 h-6" />
-            </a>
-            <a
-              href="tel:+1234567890"
-              className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
-              style={{ minWidth: '48px', minHeight: '48px' }}
-            >
-              <Phone className="w-6 h-6" />
-            </a>
-          </div>
         </div>
 
         {/* Floating Action Button - Updated styling */}
@@ -111,20 +82,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Business Card Section with Social Icons */}
+      {/* Business Card Section */}
       <div className="relative">
-        {/* Social Icons in 3rd Section */}
-        <div className="social-container">
-          <a href="https://wa.me/1234567890" target="_blank" rel="noopener noreferrer">
-            <MessageCircle className="w-9 h-9 text-green-500 hover:text-green-600 transition-colors" />
-          </a>
-          <a href="https://instagram.com/momentsphotography" target="_blank" rel="noopener noreferrer">
-            <Instagram className="w-9 h-9 text-purple-500 hover:text-purple-600 transition-colors" />
-          </a>
-          <a href="tel:+1234567890">
-            <Phone className="w-9 h-9 text-blue-500 hover:text-blue-600 transition-colors" />
-          </a>
-        </div>
         <BusinessCard />
         
         {/* Admin Link - Now static in footer */}
