@@ -34,16 +34,18 @@ const Booking = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b px-4 py-4">
         <div className="max-w-md mx-auto flex items-center gap-4">
-          <Link to="/" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <Link to="/" className="back-btn p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-xl font-bold text-gray-800">Book Your Event</h1>
+          <div className="booking-header flex-1">
+            <h1 className="text-xl font-bold text-gray-800">Book Your Event</h1>
+          </div>
         </div>
       </header>
 
       {/* Booking Form */}
       <div className="px-4 py-8">
-        <div className="max-w-md mx-auto">
+        <div className="booking-form max-w-md mx-auto">
           <div className="bg-white rounded-2xl shadow-xl p-6">
             <div className="text-center mb-6">
               <Calendar className="w-12 h-12 text-rose-500 mx-auto mb-3" />

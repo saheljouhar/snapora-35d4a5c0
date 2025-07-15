@@ -19,7 +19,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
       {/* Header */}
-      <header className="hero-section relative h-screen flex flex-col items-center justify-center px-4 text-center overflow-hidden">
+      <header className="hero-section hero-container relative h-screen flex flex-col items-center justify-center px-4 text-center overflow-hidden">
         {/* Background Image Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
@@ -31,7 +31,7 @@ const Index = () => {
         
         <div className="relative z-10 max-w-md mx-auto animate-fade-in">
           {/* Event Poster Container */}
-          <div className="poster-container poster-hero mb-8 animate-scale-in">
+          <div className="poster-container poster-hero hero-poster mb-8 animate-scale-in">
             <img 
               src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
               alt="Event Poster" 

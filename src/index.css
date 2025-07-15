@@ -138,6 +138,7 @@ All colors MUST be HSL.
     font-size: 16px !important;
     width: auto !important;
     min-width: 160px !important;
+    margin: 0 auto !important;
   }
 
   .cta-button {
@@ -160,6 +161,21 @@ All colors MUST be HSL.
     border: 1px solid hsl(214.3 31.8% 91.4%) !important;
     border-radius: 8px !important;
     box-shadow: none !important;
+  }
+
+  /* Hero section centering fixes */
+  .hero-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    min-height: 60vh !important;
+  }
+  
+  .hero-poster {
+    max-width: 90% !important;
+    margin: 0 auto 30px !important;
   }
 
   /* Event poster container */
@@ -204,6 +220,62 @@ All colors MUST be HSL.
     display: inline-block;
   }
 
+  /* Booking form centering fixes */
+  .booking-header {
+    text-align: center !important;
+    margin-bottom: 30px !important;
+  }
+  
+  .booking-header h1 {
+    font-size: 2rem !important;
+    position: relative !important;
+    display: inline-block !important;
+  }
+  
+  .booking-header h1:after {
+    content: "↓";
+    display: block !important;
+    font-size: 1.5rem !important;
+    text-align: center !important;
+    margin-top: 10px !important;
+    animation: bounce 2s infinite !important;
+  }
+
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-10px);}
+    60% {transform: translateY(-5px);}
+  }
+  
+  .booking-form {
+    max-width: 600px !important;
+    margin: 0 auto !important;
+  }
+
+  /* Admin dashboard fixes */
+  .admin-header {
+    text-align: center !important;
+    margin-bottom: 30px !important;
+  }
+  
+  .admin-header h1 {
+    font-size: 1.5rem !important;
+    font-weight: normal !important;
+  }
+  
+  .back-btn {
+    position: absolute !important;
+    left: 20px !important;
+    top: 20px !important;
+    padding: 5px 10px !important;
+    text-decoration: none !important;
+  }
+  
+  .admin-nav {
+    justify-content: center !important;
+    gap: 20px !important;
+  }
+
   /* Mobile responsive poster */
   @media (max-width: 480px) {
     .event-poster {
@@ -216,19 +288,6 @@ All colors MUST be HSL.
   .empty-slot {
     background: linear-gradient(45deg, transparent 30%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.1) 70%, transparent 70%);
     background-size: 20px 20px;
-  }
-
-  /* Booking form styling */
-  .booking-form {
-    max-width: 400px;
-    margin: 0 auto;
-  }
-
-  /* Admin navigation */
-  .admin-nav {
-    position: sticky;
-    top: 0;
-    z-index: 10;
   }
 
   /* FAB (Floating Action Button) specific styles */
