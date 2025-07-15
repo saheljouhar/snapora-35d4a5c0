@@ -90,19 +90,13 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Floating Action Button */}
+        {/* Floating Action Button - Updated styling */}
         <button
           onClick={() => setShowUploadModal(true)}
-          className="action-button fab fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-50 flex items-center gap-3"
-          style={{ 
-            width: '120px', 
-            height: '40px', 
-            fontSize: '14px', 
-            padding: '8px 12px'
-          }}
+          className="add-photos-btn fab fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-50 flex items-center gap-3"
         >
           <Camera className="w-4 h-4" />
-          <span className="hidden sm:inline">Add Photos</span>
+          <span>Add Photos</span>
         </button>
       </header>
 
@@ -132,24 +126,19 @@ const Index = () => {
           </a>
         </div>
         <BusinessCard />
-      </div>
-
-      {/* Admin Link - Fixed bottom-right with updated styling */}
-      <div className="fixed bottom-5 right-5 z-[100]" id="admin-btn">
-        <Link to="/admin">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full h-full text-white hover:text-gray-200 bg-transparent hover:bg-transparent"
-            style={{ 
-              width: '50px', 
-              height: '50px',
-              padding: '0'
-            }}
-          >
-            A
-          </Button>
-        </Link>
+        
+        {/* Admin Link - Now static in footer */}
+        <div className="py-8 px-4" id="admin-btn">
+          <Link to="/admin">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full"
+            >
+              Admin Dashboard
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Modals */}
