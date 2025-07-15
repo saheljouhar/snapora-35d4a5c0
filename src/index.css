@@ -236,6 +236,18 @@ All colors MUST be HSL.
     margin: 0 auto !important;
   }
 
+  /* Booking form specific back button */
+  .booking-form .back-btn {
+    position: static !important;
+    padding: 8px !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    transform: none !important;
+    left: auto !important;
+    top: auto !important;
+  }
+
   /* Admin dashboard fixes - Updated */
   .admin-header {
     position: relative !important;
@@ -252,7 +264,7 @@ All colors MUST be HSL.
     margin: 0 !important;
   }
   
-  .back-btn {
+  .admin-header .back-btn {
     position: absolute !important;
     left: 0 !important;
     top: 50% !important;
