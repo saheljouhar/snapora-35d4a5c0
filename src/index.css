@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -223,12 +224,16 @@ All colors MUST be HSL.
   .booking-header {
     text-align: center !important;
     margin-bottom: 30px !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative !important;
   }
   
   .booking-header h1 {
-    font-size: 1.5rem !important;
-    position: relative !important;
-    display: inline-block !important;
+    font-size: 1.25rem !important;
+    margin: 0 !important;
   }
   
   .booking-form {
@@ -238,14 +243,14 @@ All colors MUST be HSL.
 
   /* Booking form specific back button */
   .booking-form .back-btn {
-    position: static !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
     padding: 8px !important;
     text-decoration: none !important;
     display: inline-flex !important;
     align-items: center !important;
-    transform: none !important;
-    left: auto !important;
-    top: auto !important;
   }
 
   /* Admin dashboard fixes - Updated */
