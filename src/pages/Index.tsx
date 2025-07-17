@@ -40,25 +40,23 @@ const Index = () => {
             />
           </div>
           
-          <div className="hero-text">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 leading-tight">
-              Help us capture every moment!
-            </h1>
-            
-            <p className="text-lg text-gray-600 mb-8 font-medium">
-              Share your photos from our special day
-            </p>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 leading-tight">
+            Help us capture every moment!
+          </h1>
+          
+          <p className="text-lg text-gray-600 mb-8 font-medium">
+            Share your photos from our special day
+          </p>
 
-            <div className="flex items-center justify-center gap-4 mb-8 text-sm text-gray-500">
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                <span>{uploadCount} photos shared</span>
-              </div>
-              <div className="w-1 h-1 bg-gray-300 rounded-full" />
-              <div className="flex items-center gap-1">
-                <ImageIcon className="w-4 h-4" />
-                <span>Live updates</span>
-              </div>
+          <div className="flex items-center justify-center gap-4 mb-8 text-sm text-gray-500">
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              <span>{uploadCount} photos shared</span>
+            </div>
+            <div className="w-1 h-1 bg-gray-300 rounded-full" />
+            <div className="flex items-center gap-1">
+              <ImageIcon className="w-4 h-4" />
+              <span>Live updates</span>
             </div>
           </div>
         </div>
