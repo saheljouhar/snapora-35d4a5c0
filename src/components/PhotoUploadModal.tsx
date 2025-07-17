@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Camera, Upload, X, Image as ImageIcon, Check, ArrowLeft } from 'lucide-react';
+import { Camera, Upload, X, Image as ImageIcon, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -13,22 +13,23 @@ interface PhotoUploadModalProps {
 const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) => {
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
-  const [previewMode, setPreviewMode] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   if (!isOpen) return null;
 
-  const handleFileUpload = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const handleFileUpload = (type: 'camera' | 'gallery') => {
+    setUploading(true);
     
-    const fileArray = Array.from(files);
-    setSelectedFiles(fileArray);
-    
-    // Create preview URLs
-    const urls = fileArray.map(file => URL.createObjectURL(file));
-    setPreviewUrls(urls);
-    setPreviewMode(true);
+    // Simulate upload process
+    setTimeout(() => {
+      setUploading(false);
+      setUploaded(true);
+      
+      // Show success state then trigger completion
+      setTimeout(() => {
+        onUpload();
+        setUploaded(false);
+      }, 1500);
+    }, 2000);
   };
 
   const handleCameraAccess = () => {
@@ -36,15 +37,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ video: true })
         .then(() => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = 'image/*';
-          input.capture = 'environment';
-          input.onchange = (e) => {
-            const target = e.target as HTMLInputElement;
-            handleFileUpload(target.files);
-          };
-          input.click();
+          handleFileUpload('camera');
         })
         .catch(() => {
           alert('Camera permission denied. Please allow camera access in your browser settings and try again.');
@@ -55,10 +48,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
       input.type = 'file';
       input.accept = 'image/*';
       input.capture = 'environment';
-      input.onchange = (e) => {
-        const target = e.target as HTMLInputElement;
-        handleFileUpload(target.files);
-      };
+      input.onchange = () => handleFileUpload('camera');
       input.click();
     }
   };
@@ -68,53 +58,8 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
     input.type = 'file';
     input.accept = 'image/*';
     input.multiple = true;
-    input.onchange = (e) => {
-      const target = e.target as HTMLInputElement;
-      handleFileUpload(target.files);
-    };
+    input.onchange = () => handleFileUpload('gallery');
     input.click();
-  };
-
-  const confirmUpload = () => {
-    setUploading(true);
-    
-    // Simulate upload process
-    setTimeout(() => {
-      setUploading(false);
-      setUploaded(true);
-      
-      // Clean up preview URLs
-      previewUrls.forEach(url => URL.revokeObjectURL(url));
-      
-      // Show success state then trigger completion
-      setTimeout(() => {
-        onUpload();
-        resetModal();
-      }, 1500);
-    }, 2000);
-  };
-
-  const cancelPreview = () => {
-    // Clean up preview URLs
-    previewUrls.forEach(url => URL.revokeObjectURL(url));
-    setPreviewMode(false);
-    setSelectedFiles([]);
-    setPreviewUrls([]);
-  };
-
-  const resetModal = () => {
-    setPreviewMode(false);
-    setSelectedFiles([]);
-    setPreviewUrls([]);
-    setUploaded(false);
-  };
-
-  const handleClose = () => {
-    if (previewUrls.length > 0) {
-      previewUrls.forEach(url => URL.revokeObjectURL(url));
-    }
-    resetModal();
-    onClose();
   };
 
   return (
@@ -123,21 +68,9 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
         <CardContent className="p-0">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b">
-            <div className="flex items-center gap-3">
-              {previewMode && !uploading && !uploaded && (
-                <button
-                  onClick={cancelPreview}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              )}
-              <h2 className="text-xl font-semibold text-gray-800">
-                {previewMode ? 'Preview Photos' : 'Add Photos'}
-              </h2>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-800">Add Photos</h2>
             <button
-              onClick={handleClose}
+              onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               style={{ minWidth: '48px', minHeight: '48px' }}
             >
@@ -159,47 +92,6 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
                 </div>
                 <p className="text-gray-800 font-medium">Photos uploaded successfully!</p>
                 <p className="text-gray-600 text-sm">Thank you for sharing your memories</p>
-              </div>
-            ) : previewMode ? (
-              <div className="space-y-4">
-                <p className="text-gray-600 text-center mb-4">
-                  {selectedFiles.length === 1 ? 'Review your photo:' : `Review your ${selectedFiles.length} photos:`}
-                </p>
-
-                {/* Photo Preview Grid */}
-                <div className="max-h-60 overflow-y-auto space-y-3">
-                  {previewUrls.map((url, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={url}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full rounded-lg border-2 border-gray-200 object-cover"
-                        style={{ maxHeight: '200px' }}
-                      />
-                      <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                        {index + 1} of {selectedFiles.length}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 mt-6">
-                  <button
-                    onClick={cancelPreview}
-                    className="flex-1 bg-gray-500 hover:bg-gray-600 text-white rounded-2xl p-4 transition-all duration-300"
-                  >
-                    <div className="font-semibold">Cancel</div>
-                    <div className="text-sm opacity-90">Choose different photos</div>
-                  </button>
-                  <button
-                    onClick={confirmUpload}
-                    className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-2xl p-4 transition-all duration-300"
-                  >
-                    <div className="font-semibold">Upload</div>
-                    <div className="text-sm opacity-90">Share {selectedFiles.length === 1 ? 'photo' : 'photos'}</div>
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="space-y-4">
