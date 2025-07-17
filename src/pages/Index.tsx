@@ -61,14 +61,14 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Floating Action Button - Updated styling */}
-        <button
+        {/* Floating Action Button */}
+        <Button 
           onClick={() => setShowUploadModal(true)}
-          className="add-photos-btn fab fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-50 flex items-center gap-3"
+          className="fixed bottom-6 right-6 z-50 bg-red-500 hover:bg-red-600 text-white shadow-lg rounded-full w-16 h-16 flex items-center justify-center"
+          size="icon"
         >
-          <Camera className="w-4 h-4" />
-          <span>Add Photos</span>
-        </button>
+          <Camera className="h-6 w-6" />
+        </Button>
       </header>
 
       {/* Photo Grid Section */}
@@ -91,8 +91,8 @@ const Index = () => {
           <Link to="/admin">
             <Button
               variant="outline"
-              size="lg"
-              className="w-full"
+              size="sm"
+              className="mx-auto block"
             >
               Admin Dashboard
             </Button>
