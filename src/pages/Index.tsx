@@ -35,8 +35,8 @@ const Index = () => {
             <img 
               src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
               alt="Event Poster" 
-              className="event-poster w-full max-w-lg mx-auto rounded-2xl shadow-2xl border-4 border-white object-cover"
-              style={{ width: '90%', maxWidth: '400px' }}
+              className="event-poster w-full rounded-2xl shadow-2xl border-4 border-white object-cover"
+              style={{ width: '90%', maxWidth: '600px', margin: '20px auto' }}
             />
           </div>
           
@@ -64,7 +64,13 @@ const Index = () => {
         {/* Floating Action Button */}
         <Button 
           onClick={() => setShowUploadModal(true)}
-          className="fixed bottom-6 right-6 z-50 bg-red-500 hover:bg-red-600 text-white shadow-lg rounded-full px-6 py-3 h-auto flex items-center gap-2"
+          className="fixed bottom-6 right-6 z-50 text-white rounded-full flex items-center gap-2"
+          style={{ 
+            backgroundColor: '#4CAF50 !important',
+            padding: '12px 30px',
+            border: 'none',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          }}
         >
           <Camera className="h-5 w-5" />
           <span className="font-medium">Add Photos</span>

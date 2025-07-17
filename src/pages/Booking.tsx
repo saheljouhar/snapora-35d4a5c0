@@ -38,7 +38,7 @@ const Booking = () => {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="booking-header flex-1">
-            <h1 className="text-xl font-bold text-gray-800">Book Your Event</h1>
+            <h1 className="text-xl font-bold text-gray-800 text-center" style={{ fontSize: '2.2rem !important' }}>Book Your Event</h1>
           </div>
         </div>
       </header>
@@ -49,7 +49,7 @@ const Booking = () => {
           <div className="bg-white rounded-2xl shadow-xl p-6">
             <div className="text-center mb-6">
               <Calendar className="w-12 h-12 text-rose-500 mx-auto mb-3" />
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Let's Plan Your Event</h2>
+              <h2 className="text-2xl text-gray-800 mb-2 text-center" style={{ color: '#666 !important', fontWeight: 'normal !important', marginBottom: '30px !important' }}>Let's Plan Your Event</h2>
               <p className="text-gray-600">Fill out the details below and we'll get back to you within 24 hours.</p>
             </div>
 
@@ -163,7 +163,7 @@ const Booking = () => {
                 className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 style={{ minHeight: '48px', fontSize: '16px' }}
               >
-                Submit Booking Request
+                Submit
               </Button>
             </form>
           </div>
