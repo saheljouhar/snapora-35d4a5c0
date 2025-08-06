@@ -38,7 +38,7 @@ const Booking = () => {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="booking-header flex-1">
-            <h1 className="text-xl font-bold text-gray-800 text-center" style={{ fontSize: '2.2rem !important' }}>Book Your Event</h1>
+            <h1 className="text-xl font-bold text-gray-800 text-center" style={{ fontSize: '2.4rem !important', marginBottom: '15px !important' }}>Book Your Event</h1>
           </div>
         </div>
       </header>

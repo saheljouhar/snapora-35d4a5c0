@@ -15,7 +15,7 @@ const BusinessCard = () => {
               <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Camera className="w-10 h-10" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Moments Photography</h2>
+              <h2 className="text-2xl font-bold mb-2">Wedflicks™</h2>
               <p className="text-rose-100">Capturing your special moments</p>
             </div>
 
@@ -86,32 +86,32 @@ const BusinessCard = () => {
                 </Link>
               </div>
 
-              {/* Social Icons */}
+              {/* Contact Icons */}
               <div className="flex items-center justify-center gap-6 mb-8">
                 <a
-                  href="https://wa.me/1234567890"
+                  href="https://wa.me/9778478564"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-3 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
-                  style={{ minWidth: '48px', minHeight: '48px' }}
+                  className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+                  style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <MessageCircle className="w-6 h-6" />
+                  <MessageCircle className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://instagram.com/momentsphotography"
+                  href="https://instagram.com/wedflicks"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
-                  style={{ minWidth: '48px', minHeight: '48px' }}
+                  className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+                  style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <Instagram className="w-6 h-6" />
+                  <Instagram className="w-4 h-4" />
                 </a>
                 <a
-                  href="tel:+1234567890"
-                  className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
-                  style={{ minWidth: '48px', minHeight: '48px' }}
+                  href="tel:9778478564"
+                  className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-lg"
+                  style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <Phone className="w-6 h-6" />
+                  <Phone className="w-4 h-4" />
                 </a>
               </div>
             </div>
