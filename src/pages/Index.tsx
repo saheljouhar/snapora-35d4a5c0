@@ -25,7 +25,7 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <header className="hero-section hero-container relative min-h-screen flex flex-col items-center justify-center px-4 text-center overflow-hidden pt-16">
+      <header className="hero-section hero-container relative min-h-screen flex flex-col items-center justify-center px-4 text-center overflow-hidden pt-8">
         {/* Background Image Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
@@ -42,7 +42,7 @@ const Index = () => {
               src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
               alt="Event Poster" 
               className="event-poster w-full rounded-2xl shadow-2xl object-cover"
-              style={{ width: '90%', maxWidth: '800px', height: 'auto', margin: '30px auto' }}
+              style={{ width: '90%', maxWidth: '800px', height: 'auto', margin: '10px auto' }}
             />
           </div>
           
