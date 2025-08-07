@@ -41,7 +41,7 @@ const Index = () => {
             <img 
               src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
               alt="Event Poster" 
-              className="event-poster w-full rounded-2xl shadow-2xl border-4 border-white object-cover"
+              className="event-poster w-full rounded-2xl shadow-2xl object-cover"
               style={{ width: '90%', maxWidth: '800px', height: 'auto', margin: '30px auto' }}
             />
           </div>
