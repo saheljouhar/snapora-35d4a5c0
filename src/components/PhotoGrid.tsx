@@ -33,6 +33,48 @@ const PhotoGrid = () => {
       url: 'https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
       likes: 22,
       device: 'iPhone 13 Pro'
+    },
+    { 
+      id: 6, 
+      url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      likes: 18,
+      device: 'Canon EOS'
+    },
+    { 
+      id: 7, 
+      url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      likes: 25,
+      device: 'iPhone 15'
+    },
+    { 
+      id: 8, 
+      url: 'https://images.unsplash.com/photo-1460978812857-470ed1c77af0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      likes: 14,
+      device: 'Sony A7'
+    },
+    { 
+      id: 9, 
+      url: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      likes: 31,
+      device: 'Nikon D850'
+    },
+    { 
+      id: 10, 
+      url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      likes: 19,
+      device: 'OnePlus 11'
+    },
+    { 
+      id: 11, 
+      url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      likes: 27,
+      device: 'iPhone 14'
+    },
+    { 
+      id: 12, 
+      url: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      likes: 16,
+      device: 'Google Pixel'
     }
   ]);
 
