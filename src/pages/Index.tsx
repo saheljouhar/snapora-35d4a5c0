@@ -18,13 +18,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
-      {/* Header with Wedflicks Logo */}
+      {/* Header */}
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm shadow-sm px-4 py-3">
-        <div className="max-w-6xl mx-auto flex items-center">
-          <div className="flex items-center gap-2">
-            <Camera className="w-8 h-8 text-rose-500" />
-            <span className="text-xl font-bold text-gray-800">Wedflicks™</span>
-          </div>
+        <div className="max-w-6xl mx-auto">
         </div>
       </nav>
 
@@ -70,23 +66,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Centered Add Photos Button */}
-          <div className="flex justify-center mt-10">
-            <Button 
-              onClick={() => setShowUploadModal(true)}
-              className="text-white flex items-center gap-2"
-              style={{ 
-                backgroundColor: '#4CAF50 !important',
-                padding: '12px 30px',
-                border: 'none',
-                borderRadius: '8px',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-              }}
-            >
-              <Camera className="h-5 w-5" />
-              <span className="font-medium">Add Photos</span>
-            </Button>
-          </div>
         </div>
       </header>
 
@@ -128,6 +107,24 @@ const Index = () => {
             </div>
           </div>
         </footer>
+      </div>
+
+      {/* Floating Add Photos Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button 
+          onClick={() => setShowUploadModal(true)}
+          className="text-white flex items-center gap-2 shadow-lg"
+          style={{ 
+            backgroundColor: '#4CAF50 !important',
+            padding: '12px 30px',
+            border: 'none',
+            borderRadius: '8px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          }}
+        >
+          <Camera className="h-5 w-5" />
+          <span className="font-medium">Add Photos</span>
+        </Button>
       </div>
 
       {/* Modals */}
