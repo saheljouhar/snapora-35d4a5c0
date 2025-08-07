@@ -19,7 +19,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
       {/* Header */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm shadow-sm px-4 py-3">
+      <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-sm px-4 py-3">
         <div className="max-w-6xl mx-auto">
         </div>
       </nav>
