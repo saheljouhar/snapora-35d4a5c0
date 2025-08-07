@@ -32,13 +32,13 @@ const Booking = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b px-4 py-4">
-        <div className="max-w-md mx-auto flex items-center gap-4">
-          <Link to="/" className="back-btn p-2 hover:bg-gray-100 rounded-full transition-colors">
+      <header className="bg-white shadow-sm border-b px-4 py-6">
+        <div className="max-w-md mx-auto">
+          <Link to="/" className="back-btn p-2 hover:bg-gray-100 rounded-full transition-colors absolute left-4 top-6">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div className="booking-header flex-1">
-            <h1 className="text-xl font-bold text-gray-800 text-center" style={{ fontSize: '2.4rem !important', marginBottom: '15px !important' }}>Book Your Event</h1>
+          <div className="booking-header">
+            <h1 className="text-center font-bold" style={{ fontSize: '2.4rem', marginBottom: '15px', color: '#1f2937' }}>Book Your Event</h1>
           </div>
         </div>
       </header>
