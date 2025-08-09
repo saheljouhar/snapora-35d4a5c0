@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Camera, Upload, X, Image as ImageIcon, Check } from 'lucide-react';
+import { Camera, Upload, X, Image as ImageIcon, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -13,11 +12,24 @@ interface PhotoUploadModalProps {
 const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) => {
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   if (!isOpen) return null;
 
   const handleFileUpload = (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    
+    setSelectedFiles(files);
+    
+    // Create preview URL for the first selected file
+    const file = files[0];
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewImage(previewUrl);
+  };
+
+  const handleConfirmUpload = () => {
+    if (!selectedFiles) return;
     
     setUploading(true);
     
@@ -26,12 +38,27 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
       setUploading(false);
       setUploaded(true);
       
+      // Clean up preview URL
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+      
       // Show success state then trigger completion
       setTimeout(() => {
         onUpload();
         setUploaded(false);
+        setPreviewImage(null);
+        setSelectedFiles(null);
       }, 1500);
     }, 2000);
+  };
+
+  const handleReupload = () => {
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage);
+    }
+    setPreviewImage(null);
+    setSelectedFiles(null);
   };
 
   const handleCameraAccess = () => {
@@ -59,6 +86,17 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
     input.click();
   };
 
+  const handleClose = () => {
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage);
+    }
+    setPreviewImage(null);
+    setSelectedFiles(null);
+    setUploading(false);
+    setUploaded(false);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-4">
       <Card className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl animate-slide-in-right">
@@ -67,7 +105,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
           <div className="flex items-center justify-between p-6 border-b">
             <h2 className="text-xl font-semibold text-gray-800">Add Photos</h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               style={{ minWidth: '48px', minHeight: '48px' }}
             >
@@ -89,6 +127,46 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
                 </div>
                 <p className="text-gray-800 font-medium">Photos uploaded successfully!</p>
                 <p className="text-gray-600 text-sm">Thank you for sharing your memories</p>
+              </div>
+            ) : previewImage ? (
+              <div className="space-y-4">
+                <p className="text-gray-600 text-center mb-4">
+                  Preview your photo{selectedFiles && selectedFiles.length > 1 ? 's' : ''}
+                </p>
+                
+                {/* Image Preview */}
+                <div className="relative bg-gray-100 rounded-2xl overflow-hidden">
+                  <img
+                    src={previewImage}
+                    alt="Preview"
+                    className="w-full h-64 object-cover"
+                  />
+                </div>
+                
+                {selectedFiles && selectedFiles.length > 1 && (
+                  <p className="text-sm text-gray-500 text-center">
+                    +{selectedFiles.length - 1} more photo{selectedFiles.length > 2 ? 's' : ''}
+                  </p>
+                )}
+                
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={handleReupload}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl p-4 flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                    <span className="font-medium">Reupload</span>
+                  </button>
+                  
+                  <button
+                    onClick={handleConfirmUpload}
+                    className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl p-4 flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105"
+                  >
+                    <Check className="w-5 h-5" />
+                    <span className="font-medium">Confirm</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
