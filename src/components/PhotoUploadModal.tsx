@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Camera, Upload, X, Image as ImageIcon, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 interface PhotoUploadModalProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ interface PhotoUploadModalProps {
 const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) => {
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   if (!isOpen) return null;
@@ -22,10 +23,9 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
     
     setSelectedFiles(files);
     
-    // Create preview URL for the first selected file
-    const file = files[0];
-    const previewUrl = URL.createObjectURL(file);
-    setPreviewImage(previewUrl);
+    // Create preview URLs for all selected files
+    const previewUrls = Array.from(files).map(file => URL.createObjectURL(file));
+    setPreviewImages(previewUrls);
   };
 
   const handleConfirmUpload = () => {
@@ -38,26 +38,22 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
       setUploading(false);
       setUploaded(true);
       
-      // Clean up preview URL
-      if (previewImage) {
-        URL.revokeObjectURL(previewImage);
-      }
+      // Clean up preview URLs
+      previewImages.forEach(url => URL.revokeObjectURL(url));
       
       // Show success state then trigger completion
       setTimeout(() => {
         onUpload();
         setUploaded(false);
-        setPreviewImage(null);
+        setPreviewImages([]);
         setSelectedFiles(null);
       }, 1500);
     }, 2000);
   };
 
   const handleReupload = () => {
-    if (previewImage) {
-      URL.revokeObjectURL(previewImage);
-    }
-    setPreviewImage(null);
+    previewImages.forEach(url => URL.revokeObjectURL(url));
+    setPreviewImages([]);
     setSelectedFiles(null);
   };
 
@@ -87,10 +83,8 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
   };
 
   const handleClose = () => {
-    if (previewImage) {
-      URL.revokeObjectURL(previewImage);
-    }
-    setPreviewImage(null);
+    previewImages.forEach(url => URL.revokeObjectURL(url));
+    setPreviewImages([]);
     setSelectedFiles(null);
     setUploading(false);
     setUploaded(false);
@@ -128,26 +122,43 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
                 <p className="text-gray-800 font-medium">Photos uploaded successfully!</p>
                 <p className="text-gray-600 text-sm">Thank you for sharing your memories</p>
               </div>
-            ) : previewImage ? (
+            ) : previewImages.length > 0 ? (
               <div className="space-y-4">
                 <p className="text-gray-600 text-center mb-4">
-                  Preview your photo{selectedFiles && selectedFiles.length > 1 ? 's' : ''}
+                  Preview your photo{previewImages.length > 1 ? 's' : ''} ({previewImages.length})
                 </p>
                 
-                {/* Image Preview */}
-                <div className="relative bg-gray-100 rounded-2xl overflow-hidden">
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    className="w-full h-64 object-cover"
-                  />
+                {/* Image Carousel */}
+                <div className="relative">
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {previewImages.map((imageUrl, index) => (
+                        <CarouselItem key={index}>
+                          <div className="relative bg-gray-100 rounded-2xl overflow-hidden">
+                            <img
+                              src={imageUrl}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-64 object-cover"
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {previewImages.length > 1 && (
+                      <>
+                        <CarouselPrevious className="left-2" />
+                        <CarouselNext className="right-2" />
+                      </>
+                    )}
+                  </Carousel>
+                  
+                  {/* Image Counter */}
+                  {previewImages.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                      1 / {previewImages.length}
+                    </div>
+                  )}
                 </div>
-                
-                {selectedFiles && selectedFiles.length > 1 && (
-                  <p className="text-sm text-gray-500 text-center">
-                    +{selectedFiles.length - 1} more photo{selectedFiles.length > 2 ? 's' : ''}
-                  </p>
-                )}
                 
                 {/* Action Buttons */}
                 <div className="flex gap-3 mt-6">
