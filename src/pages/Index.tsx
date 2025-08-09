@@ -95,7 +95,7 @@ const Index = () => {
             
             {/* Admin Link */}
             <div id="admin-btn">
-              <Link to="/admin">
+              <Link to="/admin-login">
                 <Button
                   variant="outline"
                   size="sm"

@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { ArrowLeft, Download, Trash2, Users, Image as ImageIcon, BarChart3, Eye } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Download, Trash2, Users, Image as ImageIcon, BarChart3, Eye, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Admin = () => {
+  const navigate = useNavigate();
   const [photos] = useState([
     { id: 1, url: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80', device: 'iOS' },
     { id: 2, url: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80', device: 'Android' },
@@ -14,6 +15,19 @@ const Admin = () => {
 
   const [activeSection, setActiveSection] = useState('stats');
   const uploadCount = 127;
+
+  // Authentication check
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    if (isAuthenticated !== 'true') {
+      navigate('/admin-login');
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/admin-login');
+  };
 
   const handleExportZip = () => {
     alert('Exporting photos as ZIP file... (This would download in a real app)');
@@ -27,14 +41,25 @@ const Admin = () => {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="admin-header relative mb-6">
-          <Link to="/">
-            <Button variant="ghost" size="sm" className="back-btn flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+        <div className="admin-header relative mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/">
+              <Button variant="ghost" size="sm" className="back-btn flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+          </div>
+          <Button 
+            onClick={handleLogout}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </Button>
         </div>
 
         {/* Navigation Menu */}
