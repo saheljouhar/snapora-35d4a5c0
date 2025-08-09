@@ -16,7 +16,9 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
 
   if (!isOpen) return null;
 
-  const handleFileUpload = (type: 'camera' | 'gallery') => {
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
     setUploading(true);
     
     // Simulate upload process
@@ -33,24 +35,16 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
   };
 
   const handleCameraAccess = () => {
-    // Check if we can access camera
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(() => {
-          handleFileUpload('camera');
-        })
-        .catch(() => {
-          alert('Camera permission denied. Please allow camera access in your browser settings and try again.');
-        });
-    } else {
-      // Fallback for older browsers - trigger file input
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.capture = 'environment';
-      input.onchange = () => handleFileUpload('camera');
-      input.click();
-    }
+    // Create file input for camera
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Use back camera
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      handleFileUpload(files);
+    };
+    input.click();
   };
 
   const handleGalleryAccess = () => {
@@ -58,7 +52,10 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
     input.type = 'file';
     input.accept = 'image/*';
     input.multiple = true;
-    input.onchange = () => handleFileUpload('gallery');
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      handleFileUpload(files);
+    };
     input.click();
   };
 
