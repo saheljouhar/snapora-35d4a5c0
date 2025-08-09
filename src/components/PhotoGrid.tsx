@@ -6,75 +6,51 @@ const PhotoGrid = () => {
   const [photos, setPhotos] = useState([
     { 
       id: 1, 
-      url: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 12,
-      device: 'iPhone 13'
-    },
-    { 
-      id: 2, 
-      url: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 8,
-      device: 'Samsung Galaxy'
-    },
-    { 
-      id: 3, 
-      url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 15,
+      url: '/lovable-uploads/d91c3a6c-97bd-4d1f-bdac-7c82b8f1dc7a.png',
+      likes: 28,
       device: 'iPhone 14 Pro'
     },
     { 
+      id: 2, 
+      url: '/lovable-uploads/74541a4d-72de-4769-900f-32b0a6fc2527.png',
+      likes: 35,
+      device: 'Canon EOS R5'
+    },
+    { 
+      id: 3, 
+      url: '/lovable-uploads/22e7d23a-a45c-4b7d-ae0c-58e60a4702af.png',
+      likes: 42,
+      device: 'Sony A7 III'
+    },
+    { 
       id: 4, 
-      url: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 6,
-      device: 'Pixel 7'
-    },
-    { 
-      id: 5, 
-      url: 'https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 22,
-      device: 'iPhone 13 Pro'
-    },
-    { 
-      id: 6, 
-      url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 18,
-      device: 'Canon EOS'
-    },
-    { 
-      id: 7, 
-      url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 25,
-      device: 'iPhone 15'
-    },
-    { 
-      id: 8, 
-      url: 'https://images.unsplash.com/photo-1460978812857-470ed1c77af0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 14,
-      device: 'Sony A7'
-    },
-    { 
-      id: 9, 
-      url: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      url: '/lovable-uploads/520644f1-92ce-4a95-bcdd-25553dd8b2b9.png',
       likes: 31,
       device: 'Nikon D850'
     },
     { 
-      id: 10, 
-      url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 19,
-      device: 'OnePlus 11'
+      id: 5, 
+      url: '/lovable-uploads/bb83c547-51a1-47cf-b156-94a5b80ed1bd.png',
+      likes: 26,
+      device: 'iPhone 15 Pro'
     },
     { 
-      id: 11, 
-      url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 27,
-      device: 'iPhone 14'
+      id: 6, 
+      url: '/lovable-uploads/3f38732c-c563-4252-9594-a389e743a0e7.png',
+      likes: 38,
+      device: 'Canon R6'
     },
     { 
-      id: 12, 
-      url: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      likes: 16,
-      device: 'Google Pixel'
+      id: 7, 
+      url: '/lovable-uploads/e4d0fa59-a3aa-4240-8d61-942f4fc53175.png',
+      likes: 33,
+      device: 'Sony A7R IV'
+    },
+    { 
+      id: 8, 
+      url: '/lovable-uploads/b4d0b97e-20cd-4a5d-ad97-3c6c15df42e8.png',
+      likes: 29,
+      device: 'Fuji X-T5'
     }
   ]);
 
