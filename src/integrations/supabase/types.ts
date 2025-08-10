@@ -14,13 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      Events: {
+        Row: {
+          event_id: string
+          poster_url: string
+        }
+        Insert: {
+          event_id?: string
+          poster_url?: string
+        }
+        Update: {
+          event_id?: string
+          poster_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_event_poster: {
+        Args: { event_id_param: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
