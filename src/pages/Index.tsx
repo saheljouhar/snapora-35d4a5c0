@@ -1,15 +1,50 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, Heart, Users, Image as ImageIcon, MessageCircle, Instagram, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PhotoUploadModal from '@/components/PhotoUploadModal';
 import BusinessCard from '@/components/BusinessCard';
 import PhotoGrid from '@/components/PhotoGrid';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadCount, setUploadCount] = useState(127); // Demo count
+  const [posterUrl, setPosterUrl] = useState('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
+  const [eventId, setEventId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get event ID from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventIdParam = urlParams.get('event');
+    setEventId(eventIdParam);
+
+    // Fetch poster URL from Supabase Events table
+    const fetchEventPoster = async () => {
+      if (eventIdParam) {
+        try {
+          const { data, error } = await supabase
+            .rpc('get_event_poster', { event_id_param: eventIdParam });
+
+          if (data && !error) {
+            setPosterUrl(data);
+          } else {
+            // Fallback to direct storage URLs based on event ID
+            const storageUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventIdParam}.jpg`;
+            setPosterUrl(storageUrl);
+          }
+        } catch (err) {
+          console.warn('Error fetching event poster:', err);
+          // Fallback to direct storage URLs based on event ID
+          const storageUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventIdParam}.jpg`;
+          setPosterUrl(storageUrl);
+        }
+      }
+    };
+
+    fetchEventPoster();
+  }, []);
 
   const handlePhotoUpload = () => {
     setUploadCount(prev => prev + 1);
@@ -39,8 +74,9 @@ const Index = () => {
           {/* Event Poster Container */}
           <div className="poster-container poster-hero hero-poster mb-8 animate-scale-in">
             <img 
-              src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
-              alt="Event Poster" 
+              id="event-poster"
+              src={posterUrl} 
+              alt={eventId ? `${eventId} Event Poster` : "Event Poster"} 
               className="event-poster w-full rounded-2xl shadow-2xl object-cover"
               style={{ width: '90%', maxWidth: '800px', height: 'auto', margin: '0 auto' }}
             />
