@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Camera } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -18,18 +19,26 @@ const AdminLogin = () => {
     setLoading(true);
     setError('');
 
-    // Simulate loading delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    // Hardcoded credentials check
-    if (email === 'admin@wedflicks.com' && password === 'WedflicksAdmin2024!') {
-      localStorage.setItem('isAuthenticated', 'true');
-      navigate('/admin');
-    } else {
-      setError('Invalid credentials');
+      if (error) {
+        setError('Invalid credentials');
+        return;
+      }
+
+      if (data.user) {
+        localStorage.setItem('isAuthenticated', 'true');
+        navigate('/admin');
+      }
+    } catch (err) {
+      setError('An error occurred during login');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
