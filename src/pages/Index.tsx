@@ -78,7 +78,7 @@ const Index = () => {
               src={posterUrl} 
               alt={eventId ? `${eventId} Event Poster` : "Event Poster"} 
               className="event-poster w-full rounded-2xl shadow-2xl object-cover"
-              style={{ width: '90%', maxWidth: '800px', height: 'auto', margin: '0 auto' }}
+              style={{ width: '95%', maxWidth: '900px', height: 'auto', margin: '0 auto' }}
             />
           </div>
           
