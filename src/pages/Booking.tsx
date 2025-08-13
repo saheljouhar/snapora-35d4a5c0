@@ -33,7 +33,7 @@ const Booking = () => {
 
     try {
       const { error } = await supabase
-        .from('Bookings')
+        .from('Bookings' as any)
         .insert({
           client_name: formData.fullName,
           phone: formData.phone,
@@ -204,10 +204,11 @@ const Booking = () => {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:scale-100"
                 style={{ minHeight: '48px', fontSize: '16px' }}
               >
-                Submit
+                {isSubmitting ? 'Submitting...' : 'Submit'}
               </Button>
             </form>
           </div>
