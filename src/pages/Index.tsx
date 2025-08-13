@@ -121,7 +121,7 @@ const Index = () => {
         <BusinessCard />
         
         {/* Footer with Wedflicks branding */}
-        <footer className="bg-gray-50 py-8 px-4">
+        <footer className="bg-gray-50 py-8 px-4 pb-20">
           <div className="max-w-6xl mx-auto text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Camera className="w-6 h-6 text-rose-500" />
