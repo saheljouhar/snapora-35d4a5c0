@@ -5,8 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Booking = () => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -23,10 +27,50 @@ const Booking = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Booking form submitted:', formData);
-    alert('Thank you for your booking request! We will contact you soon.');
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('Bookings')
+        .insert({
+          client_name: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          event_type: formData.eventType,
+          event_location: formData.location,
+          event_date: formData.eventDate,
+          status: 'Pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Booking Submitted Successfully!",
+        description: "We've received your booking request and will contact you within 24 hours.",
+      });
+
+      // Reset form
+      setFormData({
+        fullName: '',
+        phone: '',
+        email: '',
+        eventType: '',
+        location: '',
+        eventDate: ''
+      });
+
+    } catch (error) {
+      console.error('Error submitting booking:', error);
+      toast({
+        title: "Error Submitting Booking",
+        description: "There was an issue submitting your booking. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
