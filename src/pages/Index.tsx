@@ -168,6 +168,7 @@ const Index = () => {
         isOpen={showUploadModal} 
         onClose={() => setShowUploadModal(false)}
         onUpload={handlePhotoUpload}
+        eventId={eventId}
       />
     </div>
   );

@@ -3,18 +3,22 @@ import { Camera, Upload, X, Image as ImageIcon, Check, RotateCcw } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface PhotoUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpload: () => void;
+  eventId?: string | null;
 }
 
-const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) => {
+const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadModalProps) => {
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const { toast } = useToast();
 
   if (!isOpen) return null;
 
@@ -28,18 +32,53 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
     setPreviewImages(previewUrls);
   };
 
-  const handleConfirmUpload = () => {
-    if (!selectedFiles) return;
+  const handleConfirmUpload = async () => {
+    if (!selectedFiles || !eventId) {
+      toast({
+        title: "Error",
+        description: "No event ID found. Please make sure you're accessing a valid event link.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setUploading(true);
     
-    // Simulate upload process
-    setTimeout(() => {
+    try {
+      const uploadPromises = Array.from(selectedFiles).map(async (file, index) => {
+        // Generate unique filename with timestamp
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(2, 15);
+        const fileExtension = file.name.split('.').pop() || 'jpg';
+        const fileName = `${timestamp}_${randomId}_${index}.${fileExtension}`;
+        const filePath = `${eventId}/${fileName}`;
+        
+        const { error } = await supabase.storage
+          .from('event_photos')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (error) {
+          throw error;
+        }
+        
+        return filePath;
+      });
+      
+      await Promise.all(uploadPromises);
+      
       setUploading(false);
       setUploaded(true);
       
       // Clean up preview URLs
       previewImages.forEach(url => URL.revokeObjectURL(url));
+      
+      toast({
+        title: "Success!",
+        description: `${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''} uploaded successfully!`,
+      });
       
       // Show success state then trigger completion
       setTimeout(() => {
@@ -48,7 +87,16 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }: PhotoUploadModalProps) 
         setPreviewImages([]);
         setSelectedFiles(null);
       }, 1500);
-    }, 2000);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setUploading(false);
+      
+      toast({
+        title: "Upload failed",
+        description: error.message || "Failed to upload photos. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReupload = () => {
