@@ -5,8 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboard from "./pages/AdminDashboard";
+import EventCreation from "./pages/EventCreation";
+import EventFiles from "./pages/EventFiles";
+import BookingManagement from "./pages/BookingManagement";
 import Booking from "./pages/Booking";
 import NotFound from "./pages/NotFound";
 
@@ -21,7 +25,12 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/admin-login" element={<AdminLogin />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="events/create" element={<EventCreation />} />
+            <Route path="events/files" element={<EventFiles />} />
+            <Route path="bookings" element={<BookingManagement />} />
+          </Route>
           <Route path="/booking" element={<Booking />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
