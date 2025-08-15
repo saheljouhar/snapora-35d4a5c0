@@ -31,7 +31,7 @@ const AdminLogin = () => {
       }
 
       if (data.user) {
-        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('adminLoggedIn', 'true');
         navigate('/admin');
       }
     } catch (err) {
