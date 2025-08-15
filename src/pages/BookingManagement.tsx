@@ -55,13 +55,13 @@ export default function BookingManagement() {
 
   const fetchBookings = async () => {
     try {
-      const response = await supabase
+      const { data, error: fetchError } = await (supabase as any)
         .from('Bookings')
         .select('*')
         .order('submission_date', { ascending: false });
 
-      if (response.error) throw response.error;
-      setBookings(response.data || []);
+      if (fetchError) throw fetchError;
+      setBookings(data || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
       toast({
@@ -76,14 +76,12 @@ export default function BookingManagement() {
 
   const updateBookingStatus = async (bookingId: number, newStatus: string) => {
     try {
-      const result = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('Bookings')
         .update({ status: newStatus })
         .eq('id', bookingId);
       
-      if (result.error) throw result.error;
-
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       // Update local state
       setBookings(prev => prev.map(booking => 
@@ -108,12 +106,12 @@ export default function BookingManagement() {
     if (!confirm("Are you sure you want to delete this booking?")) return;
 
     try {
-      const response = await supabase
+      const { error: deleteError } = await (supabase as any)
         .from('Bookings')
         .delete()
         .eq('id', bookingId);
 
-      if (response.error) throw response.error;
+      if (deleteError) throw deleteError;
 
       setBookings(prev => prev.filter(booking => booking.id !== bookingId));
       
