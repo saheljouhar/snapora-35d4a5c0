@@ -123,12 +123,9 @@ const Index = () => {
         {/* Footer with Wedflicks branding */}
         <footer className="bg-gray-50 py-8 px-4 pb-20">
           <div className="max-w-6xl mx-auto text-center">
-            <div className="flex items-center justify-center mb-4">
-              <img 
-                src="/lovable-uploads/643fc91b-27dd-41de-8647-6bd090cee7d5.png" 
-                alt="Snapora" 
-                className="h-6 w-auto"
-              />
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Camera className="w-6 h-6 text-rose-500" />
+              <span className="text-lg font-semibold text-gray-800">Snapora™</span>
             </div>
             <p className="text-gray-600 text-sm mb-4">Capturing your special moments</p>
             

@@ -12,13 +12,10 @@ const BusinessCard = () => {
           <CardContent className="p-0">
             {/* Header with Logo */}
             <div className="bg-gradient-to-r from-rose-500 to-pink-500 p-8 text-white text-center">
-              <div className="flex items-center justify-center mx-auto mb-4">
-                <img 
-                  src="/lovable-uploads/643fc91b-27dd-41de-8647-6bd090cee7d5.png" 
-                  alt="Snapora" 
-                  className="h-12 w-auto"
-                />
+              <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Camera className="w-10 h-10" />
               </div>
+              <h2 className="text-2xl font-bold mb-2">Snapora™</h2>
               <p className="text-rose-100">Capturing your special moments</p>
             </div>
 
