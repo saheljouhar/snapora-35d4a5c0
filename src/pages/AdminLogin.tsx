@@ -46,9 +46,12 @@ const AdminLogin = () => {
       <div className="w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Camera className="w-8 h-8 text-rose-500" />
-            <span className="text-2xl font-bold text-gray-800">Wedflicks™</span>
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src="/lovable-uploads/643fc91b-27dd-41de-8647-6bd090cee7d5.png" 
+              alt="Snapora" 
+              className="h-8 w-auto"
+            />
           </div>
           <p className="text-gray-600">Capturing your special moments</p>
         </div>
