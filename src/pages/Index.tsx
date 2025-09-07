@@ -161,7 +161,7 @@ const Index = () => {
       <div className="relative">
         <BusinessCard />
         
-        {/* Footer with Wedflicks branding */}
+        {/* Footer with Snapora branding */}
         <footer className="bg-gray-50 py-8 px-4 pb-20">
           <div className="max-w-6xl mx-auto text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
@@ -169,6 +169,17 @@ const Index = () => {
               <span className="text-lg font-semibold text-gray-800">Snapora™</span>
             </div>
             <p className="text-gray-600 text-sm mb-4">Capturing your special moments</p>
+            
+            {/* Legal Links */}
+            <div className="flex items-center justify-center gap-4 mb-4 text-sm">
+              <Link to="/privacy-policy" className="text-gray-500 hover:text-rose-500 transition-colors">
+                Privacy Policy
+              </Link>
+              <span className="text-gray-300">•</span>
+              <Link to="/terms-of-service" className="text-gray-500 hover:text-rose-500 transition-colors">
+                Terms of Service
+              </Link>
+            </div>
             
             {/* Admin Link */}
             <div id="admin-btn">

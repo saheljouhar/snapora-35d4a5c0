@@ -12,6 +12,8 @@ import EventCreation from "./pages/EventCreation";
 import EventFiles from "./pages/EventFiles";
 import BookingManagement from "./pages/BookingManagement";
 import Booking from "./pages/Booking";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="bookings" element={<BookingManagement />} />
           </Route>
           <Route path="/booking" element={<Booking />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
