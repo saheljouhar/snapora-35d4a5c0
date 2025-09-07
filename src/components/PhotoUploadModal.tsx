@@ -41,33 +41,50 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
         return;
       }
       
-      // For large files (>2MB), create a compressed preview
+      // For large files (>2MB), create a dynamic compressed preview
       if (file.size > 2 * 1024 * 1024) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
         
         img.onload = () => {
-          // Calculate new dimensions maintaining aspect ratio
-          const maxDimension = 800; // Max width/height for preview
+          // Calculate dynamic dimensions based on original size and file size
           let { width, height } = img;
+          const originalPixels = width * height;
           
-          if (width > height) {
-            if (width > maxDimension) {
-              height = (height * maxDimension) / width;
-              width = maxDimension;
-            }
-          } else {
-            if (height > maxDimension) {
-              width = (width * maxDimension) / height;
-              height = maxDimension;
+          // Dynamic scaling based on file size and original dimensions
+          let scaleFactor = 1;
+          if (file.size > 8 * 1024 * 1024) { // >8MB
+            scaleFactor = Math.min(0.4, Math.sqrt(2000000 / originalPixels));
+          } else if (file.size > 5 * 1024 * 1024) { // >5MB
+            scaleFactor = Math.min(0.5, Math.sqrt(3000000 / originalPixels));
+          } else if (file.size > 3 * 1024 * 1024) { // >3MB
+            scaleFactor = Math.min(0.6, Math.sqrt(4000000 / originalPixels));
+          } else { // 2-3MB
+            scaleFactor = Math.min(0.7, Math.sqrt(5000000 / originalPixels));
+          }
+          
+          // Apply the scale factor
+          width = Math.floor(width * scaleFactor);
+          height = Math.floor(height * scaleFactor);
+          
+          // Ensure minimum readable size
+          const minDimension = 200;
+          if (width < minDimension && height < minDimension) {
+            if (width > height) {
+              width = minDimension;
+              height = Math.floor((height * minDimension) / width);
+            } else {
+              height = minDimension;
+              width = Math.floor((width * minDimension) / height);
             }
           }
           
           canvas.width = width;
           canvas.height = height;
           
-          // Draw and compress
+          // Draw and compress with dynamic quality
+          const quality = file.size > 5 * 1024 * 1024 ? 0.7 : 0.8;
           ctx?.drawImage(img, 0, 0, width, height);
           canvas.toBlob((blob) => {
             if (blob) {
@@ -75,7 +92,13 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
               previewUrls.push(compressedUrl);
               setPreviewImages([...previewUrls]);
             }
-          }, 'image/jpeg', 0.8); // 80% quality
+          }, 'image/jpeg', quality);
+        };
+        
+        img.onerror = () => {
+          // Fallback: use original file for preview if compression fails
+          previewUrls.push(URL.createObjectURL(file));
+          setPreviewImages([...previewUrls]);
         };
         
         img.src = URL.createObjectURL(file);
