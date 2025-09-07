@@ -11,7 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 const Index = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadCount, setUploadCount] = useState(127); // Demo count
-  const [posterUrl, setPosterUrl] = useState('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(true);
   const [eventId, setEventId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,26 +21,54 @@ const Index = () => {
     const eventIdParam = urlParams.get('event');
     setEventId(eventIdParam);
 
-    // Fetch poster URL from Supabase Events table
+    // Fetch poster URL from Supabase Events table with preloading
     const fetchEventPoster = async () => {
       if (eventIdParam) {
         try {
           const { data, error } = await supabase
             .rpc('get_event_poster', { event_id_param: eventIdParam });
 
+          let imageUrl;
           if (data && !error) {
-            setPosterUrl(data);
+            imageUrl = data;
           } else {
             // Fallback to direct storage URLs based on event ID
-            const storageUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventIdParam}.jpg`;
-            setPosterUrl(storageUrl);
+            imageUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventIdParam}.jpg`;
           }
+
+          // Preload the image before setting it
+          const img = new Image();
+          img.onload = () => {
+            setPosterUrl(imageUrl);
+            setIsImageLoading(false);
+          };
+          img.onerror = () => {
+            // If image fails to load, use default and stop loading
+            setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
+            setIsImageLoading(false);
+          };
+          img.src = imageUrl;
         } catch (err) {
           console.warn('Error fetching event poster:', err);
           // Fallback to direct storage URLs based on event ID
           const storageUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventIdParam}.jpg`;
-          setPosterUrl(storageUrl);
+          
+          // Preload the fallback image
+          const img = new Image();
+          img.onload = () => {
+            setPosterUrl(storageUrl);
+            setIsImageLoading(false);
+          };
+          img.onerror = () => {
+            setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
+            setIsImageLoading(false);
+          };
+          img.src = storageUrl;
         }
+      } else {
+        // No event ID, use default image
+        setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
+        setIsImageLoading(false);
       }
     };
 
@@ -73,13 +102,25 @@ const Index = () => {
         <div className="relative z-10 max-w-4xl mx-auto animate-fade-in">
           {/* Event Poster Container */}
           <div className="poster-container poster-hero hero-poster mb-8 animate-scale-in">
-            <img 
-              id="event-poster"
-              src={posterUrl} 
-              alt={eventId ? `${eventId} Event Poster` : "Event Poster"} 
-              className="event-poster w-full rounded-2xl shadow-2xl object-cover"
-              style={{ width: '95%', maxWidth: '900px', height: 'auto', margin: '0 auto' }}
-            />
+            {isImageLoading ? (
+              <div 
+                className="w-full rounded-2xl shadow-2xl bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center"
+                style={{ width: '95%', maxWidth: '900px', height: '600px', margin: '0 auto' }}
+              >
+                <div className="text-center">
+                  <ImageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4 animate-pulse" />
+                  <p className="text-gray-500 font-medium">Loading event poster...</p>
+                </div>
+              </div>
+            ) : posterUrl ? (
+              <img 
+                id="event-poster"
+                src={posterUrl} 
+                alt={eventId ? `${eventId} Event Poster` : "Event Poster"} 
+                className="event-poster w-full rounded-2xl shadow-2xl object-cover transition-opacity duration-300"
+                style={{ width: '95%', maxWidth: '900px', height: 'auto', margin: '0 auto' }}
+              />
+            ) : null}
           </div>
           
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 leading-tight">

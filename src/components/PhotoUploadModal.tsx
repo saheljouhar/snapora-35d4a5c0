@@ -27,9 +27,68 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     
     setSelectedFiles(files);
     
-    // Create preview URLs for all selected files
-    const previewUrls = Array.from(files).map(file => URL.createObjectURL(file));
-    setPreviewImages(previewUrls);
+    // Create preview URLs for all selected files with size check and compression
+    const previewUrls: string[] = [];
+    
+    Array.from(files).forEach((file) => {
+      // Check file size - if larger than 2MB, we'll still create preview but may need compression
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast({
+          title: "File too large",
+          description: `${file.name} is over 10MB. Please choose a smaller file.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // For large files (>2MB), create a compressed preview
+      if (file.size > 2 * 1024 * 1024) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+          // Calculate new dimensions maintaining aspect ratio
+          const maxDimension = 800; // Max width/height for preview
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxDimension) {
+              height = (height * maxDimension) / width;
+              width = maxDimension;
+            }
+          } else {
+            if (height > maxDimension) {
+              width = (width * maxDimension) / height;
+              height = maxDimension;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx?.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const compressedUrl = URL.createObjectURL(blob);
+              previewUrls.push(compressedUrl);
+              setPreviewImages([...previewUrls]);
+            }
+          }, 'image/jpeg', 0.8); // 80% quality
+        };
+        
+        img.src = URL.createObjectURL(file);
+      } else {
+        // For smaller files, use original
+        previewUrls.push(URL.createObjectURL(file));
+      }
+    });
+    
+    // Set previews for smaller files immediately
+    if (previewUrls.length > 0) {
+      setPreviewImages(previewUrls);
+    }
   };
 
   const handleConfirmUpload = async () => {
@@ -260,7 +319,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                 </button>
 
                 <p className="text-xs text-gray-500 text-center mt-4">
-                  Photos will be compressed to 1080px width for faster sharing
+                  Photos will be compressed for faster sharing. Max file size: 10MB
                 </p>
               </div>
             )}
