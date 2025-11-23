@@ -67,10 +67,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_event_poster: {
-        Args: { event_id_param: string }
-        Returns: string
-      }
+      get_event_poster: { Args: { event_id_param: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

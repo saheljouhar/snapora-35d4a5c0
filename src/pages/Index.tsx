@@ -14,6 +14,7 @@ const Index = () => {
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [eventId, setEventId] = useState<string | null>(null);
+  const [eventNotFound, setEventNotFound] = useState(false);
 
   useEffect(() => {
     // Get event ID from URL parameter
@@ -30,7 +31,8 @@ const Index = () => {
 
           let imageUrl;
           if (data && !error) {
-            imageUrl = data;
+            // Trim whitespace from URL
+            imageUrl = typeof data === 'string' ? data.trim() : data;
           } else {
             // Fallback to direct storage URLs based on event ID
             imageUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventIdParam}.jpg`;
@@ -41,11 +43,15 @@ const Index = () => {
           img.onload = () => {
             setPosterUrl(imageUrl);
             setIsImageLoading(false);
+            setEventNotFound(false);
           };
           img.onerror = () => {
-            // If image fails to load, use default and stop loading
-            setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
+            // If image fails to load, check if event exists in database
+            console.warn(`Event poster not found for event ID: ${eventIdParam}`);
+            setEventNotFound(true);
             setIsImageLoading(false);
+            // Use default fallback
+            setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
           };
           img.src = imageUrl;
         } catch (err) {
@@ -58,10 +64,13 @@ const Index = () => {
           img.onload = () => {
             setPosterUrl(storageUrl);
             setIsImageLoading(false);
+            setEventNotFound(false);
           };
           img.onerror = () => {
-            setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
+            console.warn(`Event poster not found for event ID: ${eventIdParam}`);
+            setEventNotFound(true);
             setIsImageLoading(false);
+            setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
           };
           img.src = storageUrl;
         }
@@ -110,6 +119,22 @@ const Index = () => {
                 <div className="text-center">
                   <ImageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4 animate-pulse" />
                   <p className="text-gray-500 font-medium">Loading event poster...</p>
+                </div>
+              </div>
+            ) : eventNotFound && eventId ? (
+              <div 
+                className="w-full rounded-2xl shadow-2xl bg-gradient-to-br from-rose-50 to-pink-50 border-2 border-rose-200 flex items-center justify-center p-8"
+                style={{ width: '95%', maxWidth: '900px', height: '400px', margin: '0 auto' }}
+              >
+                <div className="text-center">
+                  <ImageIcon className="w-16 h-16 text-rose-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Event Not Found</h3>
+                  <p className="text-gray-600 mb-4">
+                    The event "<span className="font-mono text-rose-600">{eventId}</span>" could not be found.
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Please check the event ID or contact the event organizer.
+                  </p>
                 </div>
               </div>
             ) : posterUrl ? (
