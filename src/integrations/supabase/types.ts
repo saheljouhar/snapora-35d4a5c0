@@ -47,17 +47,50 @@ export type Database = {
         }
         Relationships: []
       }
+      event_photos: {
+        Row: {
+          created_at: string | null
+          device_info: string | null
+          event_id: string
+          id: string
+          photo_url: string
+          thumbnail_url: string | null
+          uploaded_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: string | null
+          event_id: string
+          id?: string
+          photo_url: string
+          thumbnail_url?: string | null
+          uploaded_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: string | null
+          event_id?: string
+          id?: string
+          photo_url?: string
+          thumbnail_url?: string | null
+          uploaded_at?: string | null
+        }
+        Relationships: []
+      }
       Events: {
         Row: {
           event_id: string
+          name: string | null
           poster_url: string
         }
         Insert: {
           event_id?: string
+          name?: string | null
           poster_url?: string
         }
         Update: {
           event_id?: string
+          name?: string | null
           poster_url?: string
         }
         Relationships: []

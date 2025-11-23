@@ -135,15 +135,41 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
         const fileName = `${timestamp}_${randomId}_${index}.${fileExtension}`;
         const filePath = `${eventId}/${fileName}`;
         
-        const { error } = await supabase.storage
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
           .from('event_photos')
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
           });
         
-        if (error) {
-          throw error;
+        if (uploadError) {
+          throw uploadError;
+        }
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('event_photos')
+          .getPublicUrl(filePath);
+        
+        // Get device info
+        const deviceInfo = navigator.userAgent.includes('Mobile') 
+          ? 'Mobile Device' 
+          : 'Desktop';
+        
+        // Insert record into event_photos table
+        const { error: dbError } = await supabase
+          .from('event_photos')
+          .insert({
+            event_id: eventId,
+            photo_url: publicUrl,
+            thumbnail_url: publicUrl,
+            device_info: deviceInfo
+          });
+        
+        if (dbError) {
+          console.error('Database insert error:', dbError);
+          throw dbError;
         }
         
         return filePath;
