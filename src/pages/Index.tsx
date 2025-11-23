@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import PhotoUploadModal from '@/components/PhotoUploadModal';
 import BusinessCard from '@/components/BusinessCard';
 import PhotoGrid from '@/components/PhotoGrid';
+import LivePhotoFeed from '@/components/LivePhotoFeed';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,6 +16,7 @@ const Index = () => {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [eventId, setEventId] = useState<string | null>(null);
   const [eventNotFound, setEventNotFound] = useState(false);
+  const [eventName, setEventName] = useState<string>('');
 
   useEffect(() => {
     // Get event ID from URL parameter
@@ -22,21 +24,25 @@ const Index = () => {
     const eventIdParam = urlParams.get('event');
     setEventId(eventIdParam);
 
-    // Fetch poster URL from Supabase Events table with preloading
+    // Fetch event details from Supabase Events table
     const fetchEventPoster = async () => {
       if (eventIdParam) {
         try {
-          const { data, error } = await supabase
-            .rpc('get_event_poster', { event_id_param: eventIdParam });
+          // Fetch event details including name
+          const { data: eventData, error: eventError } = await supabase
+            .from('Events')
+            .select('name, poster_url')
+            .eq('event_id', eventIdParam)
+            .single();
 
-          let imageUrl;
-          if (data && !error) {
+          if (eventData && !eventError) {
+            // Set event name
+            setEventName(eventData.name || eventIdParam);
+            
             // Trim whitespace from URL
-            imageUrl = typeof data === 'string' ? data.trim() : data;
-          } else {
-            // Fallback to direct storage URLs based on event ID
-            imageUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventIdParam}.jpg`;
-          }
+            const imageUrl = typeof eventData.poster_url === 'string' 
+              ? eventData.poster_url.trim() 
+              : eventData.poster_url;
 
           // Preload the image before setting it
           const img = new Image();
@@ -53,9 +59,18 @@ const Index = () => {
             // Use default fallback
             setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
           };
-          img.src = imageUrl;
+            img.src = imageUrl;
+          } else {
+            // Event not found in database or error
+            console.warn(`Event not found: ${eventIdParam}`);
+            setEventNotFound(true);
+            setIsImageLoading(false);
+            setPosterUrl('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80');
+          }
         } catch (err) {
           console.warn('Error fetching event poster:', err);
+          setEventName(eventIdParam);
+          
           // Fallback to direct storage URLs based on event ID
           const storageUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventIdParam}.jpg`;
           
@@ -170,6 +185,9 @@ const Index = () => {
 
         </div>
       </header>
+
+      {/* Live Photo Feed Section */}
+      <LivePhotoFeed eventId={eventId} eventName={eventName} />
 
       {/* Photo Grid Section */}
       <section className="py-12 px-4">
