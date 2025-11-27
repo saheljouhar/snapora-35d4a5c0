@@ -94,6 +94,10 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
 
   const handleLike = async (photoId: string) => {
     try {
+      // Get current photo
+      const currentPhoto = photos.find(p => p.id === photoId);
+      if (!currentPhoto) return;
+
       // Optimistically update UI
       setPhotos((current) =>
         current.map((photo) =>
@@ -102,9 +106,10 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
       );
 
       // Update in database
-      const { error } = await supabase.rpc('increment_photo_likes', {
-        photo_id: photoId
-      });
+      const { error } = await supabase
+        .from('event_photos')
+        .update({ likes: currentPhoto.likes + 1 })
+        .eq('id', photoId);
 
       if (error) {
         console.error('Error liking photo:', error);
