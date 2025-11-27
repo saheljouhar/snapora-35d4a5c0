@@ -97,48 +97,78 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
   }, [eventId]);
 
   const handleLike = async (photoId: string) => {
-    // Check if already liked
-    if (likedPhotos.has(photoId)) {
-      return;
-    }
-
     try {
       // Get current photo
       const currentPhoto = photos.find(p => p.id === photoId);
       if (!currentPhoto) return;
 
-      // Add to liked photos
+      const isLiked = likedPhotos.has(photoId);
       const newLikedPhotos = new Set(likedPhotos);
-      newLikedPhotos.add(photoId);
-      setLikedPhotos(newLikedPhotos);
-      localStorage.setItem('likedPhotos', JSON.stringify([...newLikedPhotos]));
+      
+      if (isLiked) {
+        // Unlike: remove from liked photos
+        newLikedPhotos.delete(photoId);
+        setLikedPhotos(newLikedPhotos);
+        localStorage.setItem('likedPhotos', JSON.stringify([...newLikedPhotos]));
 
-      // Optimistically update UI
-      setPhotos((current) =>
-        current.map((photo) =>
-          photo.id === photoId ? { ...photo, likes: photo.likes + 1 } : photo
-        )
-      );
-
-      // Update in database
-      const { error } = await supabase
-        .from('event_photos')
-        .update({ likes: currentPhoto.likes + 1 })
-        .eq('id', photoId);
-
-      if (error) {
-        console.error('Error liking photo:', error);
-        // Revert on error
-        const revertedLikes = new Set(likedPhotos);
-        revertedLikes.delete(photoId);
-        setLikedPhotos(revertedLikes);
-        localStorage.setItem('likedPhotos', JSON.stringify([...revertedLikes]));
-        
+        // Optimistically update UI
         setPhotos((current) =>
           current.map((photo) =>
-            photo.id === photoId ? { ...photo, likes: photo.likes - 1 } : photo
+            photo.id === photoId ? { ...photo, likes: Math.max(0, photo.likes - 1) } : photo
           )
         );
+
+        // Update in database
+        const { error } = await supabase
+          .from('event_photos')
+          .update({ likes: Math.max(0, currentPhoto.likes - 1) })
+          .eq('id', photoId);
+
+        if (error) {
+          console.error('Error unliking photo:', error);
+          // Revert on error
+          newLikedPhotos.add(photoId);
+          setLikedPhotos(newLikedPhotos);
+          localStorage.setItem('likedPhotos', JSON.stringify([...newLikedPhotos]));
+          
+          setPhotos((current) =>
+            current.map((photo) =>
+              photo.id === photoId ? { ...photo, likes: photo.likes + 1 } : photo
+            )
+          );
+        }
+      } else {
+        // Like: add to liked photos
+        newLikedPhotos.add(photoId);
+        setLikedPhotos(newLikedPhotos);
+        localStorage.setItem('likedPhotos', JSON.stringify([...newLikedPhotos]));
+
+        // Optimistically update UI
+        setPhotos((current) =>
+          current.map((photo) =>
+            photo.id === photoId ? { ...photo, likes: photo.likes + 1 } : photo
+          )
+        );
+
+        // Update in database
+        const { error } = await supabase
+          .from('event_photos')
+          .update({ likes: currentPhoto.likes + 1 })
+          .eq('id', photoId);
+
+        if (error) {
+          console.error('Error liking photo:', error);
+          // Revert on error
+          newLikedPhotos.delete(photoId);
+          setLikedPhotos(newLikedPhotos);
+          localStorage.setItem('likedPhotos', JSON.stringify([...newLikedPhotos]));
+          
+          setPhotos((current) =>
+            current.map((photo) =>
+              photo.id === photoId ? { ...photo, likes: photo.likes - 1 } : photo
+            )
+          );
+        }
       }
     } catch (err) {
       console.error('Error:', err);
@@ -227,10 +257,7 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
                       e.stopPropagation();
                       handleLike(photo.id);
                     }}
-                    className={`absolute top-3 right-3 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 group/like z-10 ${
-                      likedPhotos.has(photo.id) ? 'cursor-not-allowed opacity-60' : ''
-                    }`}
-                    disabled={likedPhotos.has(photo.id)}
+                    className="absolute top-3 right-3 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 group/like z-10"
                   >
                     <Heart 
                       className="w-5 h-5 text-pink-500 transition-all duration-200 group-hover/like:fill-pink-500" 
