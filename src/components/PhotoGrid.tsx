@@ -67,23 +67,34 @@ const PhotoGrid = () => {
   }, []);
 
   const handleLike = (id: number) => {
-    // Check if already liked
-    if (likedPhotos.has(id)) {
-      return;
-    }
-
-    // Add to liked photos
+    const isLiked = likedPhotos.has(id);
     const newLikedPhotos = new Set(likedPhotos);
-    newLikedPhotos.add(id);
-    setLikedPhotos(newLikedPhotos);
-    localStorage.setItem('likedPhotosStatic', JSON.stringify([...newLikedPhotos]));
+    
+    if (isLiked) {
+      // Unlike: remove from liked photos
+      newLikedPhotos.delete(id);
+      setLikedPhotos(newLikedPhotos);
+      localStorage.setItem('likedPhotosStatic', JSON.stringify([...newLikedPhotos]));
 
-    // Update likes count
-    setPhotos(photos.map(photo => 
-      photo.id === id 
-        ? { ...photo, likes: photo.likes + 1 }
-        : photo
-    ));
+      // Update likes count (decrement)
+      setPhotos(photos.map(photo => 
+        photo.id === id 
+          ? { ...photo, likes: Math.max(0, photo.likes - 1) }
+          : photo
+      ));
+    } else {
+      // Like: add to liked photos
+      newLikedPhotos.add(id);
+      setLikedPhotos(newLikedPhotos);
+      localStorage.setItem('likedPhotosStatic', JSON.stringify([...newLikedPhotos]));
+
+      // Update likes count (increment)
+      setPhotos(photos.map(photo => 
+        photo.id === id 
+          ? { ...photo, likes: photo.likes + 1 }
+          : photo
+      ));
+    }
   };
 
   // Ensure even number of images by adding placeholder if odd count
@@ -146,11 +157,8 @@ const PhotoGrid = () => {
                   </span>
                   <button
                     onClick={() => handleLike(photo.id)}
-                    className={`flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors ${
-                      likedPhotos.has(photo.id) ? 'cursor-not-allowed opacity-60' : ''
-                    }`}
+                    className="flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors"
                     style={{ minHeight: '32px' }}
-                    disabled={likedPhotos.has(photo.id)}
                   >
                     <Heart 
                       className="w-4 h-4 text-red-500" 
