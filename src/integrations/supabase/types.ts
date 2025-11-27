@@ -53,6 +53,7 @@ export type Database = {
           device_info: string | null
           event_id: string
           id: string
+          likes: number
           photo_url: string
           thumbnail_url: string | null
           uploaded_at: string | null
@@ -62,6 +63,7 @@ export type Database = {
           device_info?: string | null
           event_id: string
           id?: string
+          likes?: number
           photo_url: string
           thumbnail_url?: string | null
           uploaded_at?: string | null
@@ -71,6 +73,7 @@ export type Database = {
           device_info?: string | null
           event_id?: string
           id?: string
+          likes?: number
           photo_url?: string
           thumbnail_url?: string | null
           uploaded_at?: string | null
