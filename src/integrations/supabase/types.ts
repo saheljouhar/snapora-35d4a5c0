@@ -104,6 +104,7 @@ export type Database = {
     }
     Functions: {
       get_event_poster: { Args: { event_id_param: string }; Returns: string }
+      increment_photo_likes: { Args: { photo_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
