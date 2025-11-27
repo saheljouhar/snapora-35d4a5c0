@@ -55,6 +55,10 @@ const PhotoGrid = () => {
   ]);
 
   const [loading, setLoading] = useState(true);
+  const [likedPhotos, setLikedPhotos] = useState<Set<number>>(() => {
+    const saved = localStorage.getItem('likedPhotosStatic');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
 
   useEffect(() => {
     // Simulate loading
@@ -63,6 +67,18 @@ const PhotoGrid = () => {
   }, []);
 
   const handleLike = (id: number) => {
+    // Check if already liked
+    if (likedPhotos.has(id)) {
+      return;
+    }
+
+    // Add to liked photos
+    const newLikedPhotos = new Set(likedPhotos);
+    newLikedPhotos.add(id);
+    setLikedPhotos(newLikedPhotos);
+    localStorage.setItem('likedPhotosStatic', JSON.stringify([...newLikedPhotos]));
+
+    // Update likes count
     setPhotos(photos.map(photo => 
       photo.id === id 
         ? { ...photo, likes: photo.likes + 1 }
@@ -130,10 +146,16 @@ const PhotoGrid = () => {
                   </span>
                   <button
                     onClick={() => handleLike(photo.id)}
-                    className="flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors"
+                    className={`flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors ${
+                      likedPhotos.has(photo.id) ? 'cursor-not-allowed opacity-60' : ''
+                    }`}
                     style={{ minHeight: '32px' }}
+                    disabled={likedPhotos.has(photo.id)}
                   >
-                    <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                    <Heart 
+                      className="w-4 h-4 text-red-500" 
+                      fill={likedPhotos.has(photo.id) ? "currentColor" : "none"}
+                    />
                     <span className="text-sm">{photo.likes}</span>
                   </button>
                 </div>

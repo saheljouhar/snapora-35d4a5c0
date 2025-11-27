@@ -21,6 +21,10 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [likedPhotos, setLikedPhotos] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('likedPhotos');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
 
   useEffect(() => {
     if (!eventId) {
@@ -93,10 +97,21 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
   }, [eventId]);
 
   const handleLike = async (photoId: string) => {
+    // Check if already liked
+    if (likedPhotos.has(photoId)) {
+      return;
+    }
+
     try {
       // Get current photo
       const currentPhoto = photos.find(p => p.id === photoId);
       if (!currentPhoto) return;
+
+      // Add to liked photos
+      const newLikedPhotos = new Set(likedPhotos);
+      newLikedPhotos.add(photoId);
+      setLikedPhotos(newLikedPhotos);
+      localStorage.setItem('likedPhotos', JSON.stringify([...newLikedPhotos]));
 
       // Optimistically update UI
       setPhotos((current) =>
@@ -113,7 +128,12 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
 
       if (error) {
         console.error('Error liking photo:', error);
-        // Revert optimistic update on error
+        // Revert on error
+        const revertedLikes = new Set(likedPhotos);
+        revertedLikes.delete(photoId);
+        setLikedPhotos(revertedLikes);
+        localStorage.setItem('likedPhotos', JSON.stringify([...revertedLikes]));
+        
         setPhotos((current) =>
           current.map((photo) =>
             photo.id === photoId ? { ...photo, likes: photo.likes - 1 } : photo
@@ -207,11 +227,14 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
                       e.stopPropagation();
                       handleLike(photo.id);
                     }}
-                    className="absolute top-3 right-3 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 group/like z-10"
+                    className={`absolute top-3 right-3 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 group/like z-10 ${
+                      likedPhotos.has(photo.id) ? 'cursor-not-allowed opacity-60' : ''
+                    }`}
+                    disabled={likedPhotos.has(photo.id)}
                   >
                     <Heart 
                       className="w-5 h-5 text-pink-500 transition-all duration-200 group-hover/like:fill-pink-500" 
-                      fill={photo.likes > 0 ? "currentColor" : "none"}
+                      fill={likedPhotos.has(photo.id) ? "currentColor" : "none"}
                     />
                   </button>
 
