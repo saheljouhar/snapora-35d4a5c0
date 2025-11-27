@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { X } from 'lucide-react';
+import { X, Heart } from 'lucide-react';
 
 interface Photo {
   id: string;
@@ -9,6 +9,7 @@ interface Photo {
   thumbnail_url: string | null;
   device_info: string | null;
   created_at: string;
+  likes: number;
 }
 
 interface LivePhotoFeedProps {
@@ -51,7 +52,7 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
 
     fetchPhotos();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates for both inserts and updates (for likes)
     const channel = supabase
       .channel('event-photos-changes')
       .on(
@@ -67,12 +68,57 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
           setPhotos((current) => [payload.new as Photo, ...current]);
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'event_photos',
+          filter: `event_id=eq.${eventId}`
+        },
+        (payload) => {
+          console.log('Photo updated:', payload);
+          setPhotos((current) =>
+            current.map((photo) =>
+              photo.id === payload.new.id ? (payload.new as Photo) : photo
+            )
+          );
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [eventId]);
+
+  const handleLike = async (photoId: string) => {
+    try {
+      // Optimistically update UI
+      setPhotos((current) =>
+        current.map((photo) =>
+          photo.id === photoId ? { ...photo, likes: photo.likes + 1 } : photo
+        )
+      );
+
+      // Update in database
+      const { error } = await supabase.rpc('increment_photo_likes', {
+        photo_id: photoId
+      });
+
+      if (error) {
+        console.error('Error liking photo:', error);
+        // Revert optimistic update on error
+        setPhotos((current) =>
+          current.map((photo) =>
+            photo.id === photoId ? { ...photo, likes: photo.likes - 1 } : photo
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
 
   if (!eventId || photos.length === 0) {
     return null;
@@ -106,17 +152,17 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
               {eventName} Wedding Photos
             </h2>
-            <p className="text-gray-600">Live feed from your guests • {photos.length} photos shared</p>
+            <p className="text-gray-600">Live feed from guests • {photos.length} photos shared</p>
           </div>
           
           {/* Fixed 2x3 grid with horizontal scroll */}
           <div className="relative">
             <div 
-              className="grid gap-4 overflow-x-auto pb-4 snap-x snap-mandatory"
+              className="grid gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory"
               style={{ 
-                gridTemplateRows: 'repeat(2, minmax(150px, 250px))',
+                gridTemplateRows: 'repeat(2, minmax(180px, 280px))',
                 gridAutoFlow: 'column',
-                gridAutoColumns: 'minmax(150px, 250px)',
+                gridAutoColumns: 'minmax(180px, 280px)',
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#ec4899 #fce7f3'
               }}
@@ -124,11 +170,13 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
               {photos.map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="snap-start group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer animate-fade-in"
+                  className="snap-start group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in"
                   style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => setSelectedPhoto(photo)}
                 >
-                  <div className="aspect-square">
+                  <div 
+                    className="aspect-square cursor-pointer"
+                    onClick={() => setSelectedPhoto(photo)}
+                  >
                     <img
                       src={photo.thumbnail_url || photo.photo_url}
                       alt={`Event photo ${index + 1}`}
@@ -138,7 +186,7 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
                   </div>
                   
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     <div className="absolute bottom-3 left-3 right-3 text-white">
                       {photo.device_info && (
                         <span className="text-xs bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm inline-block">
@@ -147,6 +195,29 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
                       )}
                     </div>
                   </div>
+
+                  {/* Like button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLike(photo.id);
+                    }}
+                    className="absolute top-3 right-3 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 group/like z-10"
+                  >
+                    <Heart 
+                      className="w-5 h-5 text-pink-500 transition-all duration-200 group-hover/like:fill-pink-500" 
+                      fill={photo.likes > 0 ? "currentColor" : "none"}
+                    />
+                  </button>
+
+                  {/* Like count */}
+                  {photo.likes > 0 && (
+                    <div className="absolute top-3 right-14 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg">
+                      <span className="text-sm font-semibold text-pink-500">
+                        {photo.likes}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
