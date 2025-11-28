@@ -21,6 +21,7 @@ export type Database = {
           event_date: string | null
           event_location: string | null
           event_type: string | null
+          id: number
           phone: string
           status: string | null
           submission_date: string | null
@@ -31,6 +32,7 @@ export type Database = {
           event_date?: string | null
           event_location?: string | null
           event_type?: string | null
+          id?: number
           phone?: string
           status?: string | null
           submission_date?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           event_date?: string | null
           event_location?: string | null
           event_type?: string | null
+          id?: number
           phone?: string
           status?: string | null
           submission_date?: string | null

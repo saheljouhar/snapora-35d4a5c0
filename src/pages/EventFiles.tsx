@@ -362,11 +362,11 @@ export default function EventFiles() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {event.date ? new Date(event.date).toLocaleDateString() : "—"}
+                      {event.date ? new Date(event.date).toLocaleDateString() : "Date Not Set"}
                     </TableCell>
                     <TableCell>{event.photoCount} photos</TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex gap-4">
                         <Button
                           variant="outline"
                           size="sm"
