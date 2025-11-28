@@ -4,13 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, ChevronRight, ChevronLeft, Upload } from "lucide-react";
+
+type Step = 1 | 2 | 3;
 
 export default function EventCreation() {
+  const [currentStep, setCurrentStep] = useState<Step>(1);
   const [eventName, setEventName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [description, setDescription] = useState("");
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [posterPreview, setPosterPreview] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [createdEvent, setCreatedEvent] = useState<{
     id: string;
@@ -23,31 +31,77 @@ export default function EventCreation() {
     return `EVT_${timestamp}`;
   };
 
-  const createEvent = async () => {
-    if (!eventName.trim()) {
+  const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPosterFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPosterPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleStep1Next = () => {
+    if (!eventName.trim() || !displayName.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter an event name",
+        title: "Required fields",
+        description: "Please fill in event name and display name",
         variant: "destructive",
       });
       return;
     }
+    setCurrentStep(2);
+  };
 
+  const handleStep2Next = () => {
+    if (!posterFile) {
+      toast({
+        title: "Poster required",
+        description: "Please upload an event poster",
+        variant: "destructive",
+      });
+      return;
+    }
+    setCurrentStep(3);
+  };
+
+  const createEvent = async () => {
     setLoading(true);
     try {
       const eventId = generateEventId();
       
+      // Upload poster to storage
+      let posterUrl = "";
+      if (posterFile) {
+        const fileExt = posterFile.name.split('.').pop();
+        const fileName = `${eventId}_poster.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('posters')
+          .upload(fileName, posterFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        posterUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${fileName}`;
+      }
+
       // Insert event into database
       const { error: dbError } = await supabase
         .from('Events')
         .insert({
           event_id: eventId,
-          poster_url: `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${eventId}_poster.jpg`
+          name: eventName,
+          display_name: displayName,
+          date: eventDate || null,
+          description: description || null,
+          poster_url: posterUrl,
+          status: 'active'
         });
 
       if (dbError) throw dbError;
 
-      // Create storage folder (this will be created automatically when first photo is uploaded)
       const uploadUrl = `${window.location.origin}/?event=${eventId}`;
       
       setCreatedEvent({
@@ -57,12 +111,9 @@ export default function EventCreation() {
 
       toast({
         title: "Success",
-        description: `Event ${eventId} created successfully!`,
+        description: `Event created successfully!`,
       });
 
-      // Reset form
-      setEventName("");
-      setEventDate("");
     } catch (error) {
       console.error("Error creating event:", error);
       toast({
@@ -101,30 +152,77 @@ export default function EventCreation() {
     img.src = "data:image/svg+xml;base64," + btoa(svgData);
   };
 
+  const resetForm = () => {
+    setCurrentStep(1);
+    setEventName("");
+    setDisplayName("");
+    setEventDate("");
+    setDescription("");
+    setPosterFile(null);
+    setPosterPreview("");
+    setCreatedEvent(null);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Event Creation</h1>
+        <h1 className="text-3xl font-bold">Create New Event</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Progress Steps */}
+      <div className="flex items-center justify-center space-x-4 mb-8">
+        <div className={`flex items-center ${currentStep >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+            1
+          </div>
+          <span className="ml-2 hidden sm:inline">Event Details</span>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <div className={`flex items-center ${currentStep >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+            2
+          </div>
+          <span className="ml-2 hidden sm:inline">Poster Upload</span>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <div className={`flex items-center ${currentStep >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+            3
+          </div>
+          <span className="ml-2 hidden sm:inline">Finalize</span>
+        </div>
+      </div>
+
+      {/* Step 1: Event Details */}
+      {currentStep === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Create New Event</CardTitle>
+            <CardTitle>Step 1: Event Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="eventName">Event Name</Label>
+              <Label htmlFor="eventName">Event Name (ID) *</Label>
               <Input
                 id="eventName"
-                placeholder="Wedding, Birthday, Concert..."
+                placeholder="e.g., wedding_priya"
                 value={eventName}
                 onChange={(e) => setEventName(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">This will be used in the URL</p>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="eventDate">Event Date (Optional)</Label>
+              <Label htmlFor="displayName">Display Name *</Label>
+              <Input
+                id="displayName"
+                placeholder="e.g., Priya & Aditya's Wedding"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="eventDate">Event Date</Label>
               <Input
                 id="eventDate"
                 type="date"
@@ -133,53 +231,179 @@ export default function EventCreation() {
               />
             </div>
 
-            <Button
-              onClick={createEvent}
-              disabled={loading}
-              className="w-full"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {loading ? "Creating..." : "Create Event"}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Brief description of the event..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <Button onClick={handleStep1Next} className="w-full">
+              Next: Upload Poster
+              <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </CardContent>
         </Card>
+      )}
 
-        {createdEvent && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Event Created Successfully!</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <p className="font-semibold text-lg">Event ID: {createdEvent.id}</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Share this QR code with guests to upload photos
-                </p>
-                
-                <div className="flex justify-center mb-4">
-                  <QRCodeSVG
-                    id="qr-code"
-                    value={createdEvent.uploadUrl}
-                    size={200}
-                    level="M"
-                    includeMargin
-                  />
+      {/* Step 2: Poster Upload */}
+      {currentStep === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Step 2: Upload Event Poster</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="poster">Event Poster *</Label>
+              <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                {posterPreview ? (
+                  <div className="space-y-4">
+                    <img 
+                      src={posterPreview} 
+                      alt="Poster preview" 
+                      className="max-h-64 mx-auto rounded"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setPosterFile(null);
+                        setPosterPreview("");
+                      }}
+                    >
+                      Change Poster
+                    </Button>
+                  </div>
+                ) : (
+                  <label htmlFor="poster" className="cursor-pointer">
+                    <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-2">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPG up to 10MB
+                    </p>
+                    <input
+                      id="poster"
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePosterChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => setCurrentStep(1)} className="flex-1">
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button onClick={handleStep2Next} className="flex-1">
+                Next: Finalize
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3: Finalize & Generate */}
+      {currentStep === 3 && !createdEvent && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Step 3: Review & Create</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3 p-4 bg-muted rounded-lg">
+              <div>
+                <p className="text-sm font-medium">Event Name:</p>
+                <p className="text-muted-foreground">{eventName}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Display Name:</p>
+                <p className="text-muted-foreground">{displayName}</p>
+              </div>
+              {eventDate && (
+                <div>
+                  <p className="text-sm font-medium">Date:</p>
+                  <p className="text-muted-foreground">{new Date(eventDate).toLocaleDateString()}</p>
                 </div>
+              )}
+              {description && (
+                <div>
+                  <p className="text-sm font-medium">Description:</p>
+                  <p className="text-muted-foreground">{description}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium">Poster:</p>
+                {posterPreview && (
+                  <img src={posterPreview} alt="Poster" className="max-h-32 mt-2 rounded" />
+                )}
+              </div>
+            </div>
 
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => setCurrentStep(2)} className="flex-1">
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button onClick={createEvent} disabled={loading} className="flex-1">
+                <Plus className="w-4 h-4 mr-2" />
+                {loading ? "Creating..." : "Create Event"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Success: Event Created */}
+      {createdEvent && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Event Created Successfully!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <p className="font-semibold text-lg mb-2">Event ID: {createdEvent.id}</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Share this QR code with guests to upload photos
+              </p>
+              
+              <div className="flex justify-center mb-4">
+                <QRCodeSVG
+                  id="qr-code"
+                  value={createdEvent.uploadUrl}
+                  size={200}
+                  level="M"
+                  includeMargin
+                />
+              </div>
+
+              <div className="flex gap-4 justify-center mb-4">
                 <Button onClick={downloadQRCode} variant="outline">
                   <Download className="w-4 h-4 mr-2" />
                   Download QR Code
                 </Button>
               </div>
-              
-              <div className="bg-muted p-3 rounded text-sm">
-                <p><strong>Upload URL:</strong></p>
-                <p className="break-all">{createdEvent.uploadUrl}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            </div>
+            
+            <div className="bg-muted p-3 rounded text-sm">
+              <p><strong>Public URL:</strong></p>
+              <p className="break-all">{createdEvent.uploadUrl}</p>
+            </div>
+
+            <Button onClick={resetForm} className="w-full">
+              Create Another Event
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

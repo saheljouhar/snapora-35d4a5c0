@@ -82,19 +82,31 @@ export type Database = {
       }
       Events: {
         Row: {
+          date: string | null
+          description: string | null
+          display_name: string | null
           event_id: string
           name: string | null
           poster_url: string
+          status: string | null
         }
         Insert: {
+          date?: string | null
+          description?: string | null
+          display_name?: string | null
           event_id?: string
           name?: string | null
           poster_url?: string
+          status?: string | null
         }
         Update: {
+          date?: string | null
+          description?: string | null
+          display_name?: string | null
           event_id?: string
           name?: string | null
           poster_url?: string
+          status?: string | null
         }
         Relationships: []
       }

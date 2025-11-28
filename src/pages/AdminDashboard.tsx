@@ -9,6 +9,7 @@ interface DashboardStats {
   totalEvents: number;
   totalPhotos: number;
   storageUsed: string;
+  activeEvents: number;
   deviceBreakdown: { name: string; value: number; color: string }[];
   uploadTrends: { date: string; uploads: number }[];
 }
@@ -19,6 +20,7 @@ export default function AdminDashboard() {
     totalEvents: 0,
     totalPhotos: 0,
     storageUsed: "0 GB",
+    activeEvents: 0,
     deviceBreakdown: [],
     uploadTrends: []
   });
@@ -34,38 +36,94 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch events count
+      // Fetch total events count
       const { count: eventsCount } = await supabase
         .from('Events')
-        .select('*', { count: 'exact' });
+        .select('*', { count: 'exact', head: true });
 
-      // Get photos from storage
-      const { data: photos } = await supabase.storage
+      // Fetch total photos count
+      const { count: photosCount } = await supabase
         .from('event_photos')
-        .list('', { limit: 1000 });
+        .select('*', { count: 'exact', head: true });
 
-      // Mock data for demo - replace with actual storage calculation
-      const mockStats: DashboardStats = {
-        totalEvents: eventsCount || 12,
-        totalPhotos: photos?.length || 2160,
-        storageUsed: "5.3 GB",
+      // Fetch all photos for detailed analysis
+      const { data: allPhotos } = await supabase
+        .from('event_photos')
+        .select('uploaded_at, device_info')
+        .order('uploaded_at', { ascending: true });
+
+      // Calculate active events (within last 7 days or future)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const { count: activeEventsCount } = await supabase
+        .from('Events')
+        .select('*', { count: 'exact', head: true })
+        .gte('date', sevenDaysAgo.toISOString().split('T')[0]);
+
+      // Calculate device breakdown
+      let iosCount = 0;
+      let androidCount = 0;
+      
+      allPhotos?.forEach(photo => {
+        if (photo.device_info) {
+          const deviceLower = photo.device_info.toLowerCase();
+          if (deviceLower.includes('ios') || deviceLower.includes('iphone') || deviceLower.includes('ipad')) {
+            iosCount++;
+          } else if (deviceLower.includes('android')) {
+            androidCount++;
+          }
+        }
+      });
+
+      const totalDevices = iosCount + androidCount || 1;
+      const iosPercentage = Math.round((iosCount / totalDevices) * 100);
+      const androidPercentage = Math.round((androidCount / totalDevices) * 100);
+
+      // Calculate upload trends (last 30 days)
+      const uploadTrendsMap = new Map<string, number>();
+      const today = new Date();
+      
+      // Initialize last 30 days with 0 uploads
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        uploadTrendsMap.set(dateStr, 0);
+      }
+
+      // Count uploads per day
+      allPhotos?.forEach(photo => {
+        if (photo.uploaded_at) {
+          const uploadDate = new Date(photo.uploaded_at);
+          const dateStr = uploadDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          if (uploadTrendsMap.has(dateStr)) {
+            uploadTrendsMap.set(dateStr, (uploadTrendsMap.get(dateStr) || 0) + 1);
+          }
+        }
+      });
+
+      const uploadTrends = Array.from(uploadTrendsMap.entries()).map(([date, uploads]) => ({
+        date,
+        uploads
+      }));
+
+      // Calculate storage used (estimate based on photo count)
+      const avgPhotoSize = 2.5; // MB average per photo
+      const totalStorageMB = (photosCount || 0) * avgPhotoSize;
+      const storageGB = (totalStorageMB / 1024).toFixed(1);
+
+      setStats({
+        totalEvents: eventsCount || 0,
+        totalPhotos: photosCount || 0,
+        storageUsed: `${storageGB} GB`,
+        activeEvents: activeEventsCount || 0,
         deviceBreakdown: [
-          { name: "iOS", value: 65, color: "#3b82f6" },
-          { name: "Android", value: 35, color: "#93c5fd" }
+          { name: "iOS", value: iosPercentage, color: "#3b82f6" },
+          { name: "Android", value: androidPercentage, color: "#93c5fd" }
         ],
-        uploadTrends: [
-          { date: "Aug 21", uploads: 45 },
-          { date: "Aug 22", uploads: 52 },
-          { date: "Aug 23", uploads: 38 },
-          { date: "Aug 24", uploads: 125 },
-          { date: "Aug 25", uploads: 85 },
-          { date: "Aug 26", uploads: 92 },
-          { date: "Aug 27", uploads: 210 },
-          { date: "Aug 28", uploads: 180 }
-        ]
-      };
-
-      setStats(mockStats);
+        uploadTrends: uploadTrends.slice(-8) // Show last 8 data points for chart
+      });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -124,8 +182,8 @@ export default function AdminDashboard() {
             <Smartphone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">Currently active</p>
+            <div className="text-2xl font-bold">{stats.activeEvents}</div>
+            <p className="text-xs text-muted-foreground">Last 7 days or upcoming</p>
           </CardContent>
         </Card>
       </div>
