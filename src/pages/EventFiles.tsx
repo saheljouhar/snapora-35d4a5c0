@@ -339,7 +339,7 @@ export default function EventFiles() {
                 <TableHead>Event</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Photos</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="w-[260px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -365,8 +365,8 @@ export default function EventFiles() {
                       {event.date ? new Date(event.date).toLocaleDateString() : "Date Not Set"}
                     </TableCell>
                     <TableCell>{event.photoCount} photos</TableCell>
-                    <TableCell>
-                      <div className="flex gap-6">
+                    <TableCell className="w-[260px]">
+                      <div className="flex justify-end gap-8">
                         <Button
                           variant="outline"
                           size="sm"
