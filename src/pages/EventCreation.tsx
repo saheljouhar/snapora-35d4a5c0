@@ -27,8 +27,14 @@ export default function EventCreation() {
   const { toast } = useToast();
 
   const generateEventId = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    return `EVT_${timestamp}`;
+    const baseId = eventName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+    const randomSuffix = Math.floor(100 + Math.random() * 900); // 3-digit suffix for uniqueness
+    return baseId ? `${baseId}_${randomSuffix}` : `event_${randomSuffix}`;
   };
 
   const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
