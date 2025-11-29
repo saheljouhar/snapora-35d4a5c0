@@ -70,6 +70,18 @@ export default function EventCreation() {
   const createEvent = async () => {
     setLoading(true);
     try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to create events",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const eventId = generateEventId();
       
       // Upload poster to storage
@@ -82,7 +94,10 @@ export default function EventCreation() {
           .from('posters')
           .upload(fileName, posterFile, { upsert: true });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("Storage upload error:", uploadError);
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
 
         posterUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${fileName}`;
       }
@@ -100,7 +115,10 @@ export default function EventCreation() {
           status: 'active'
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Database insert error:", dbError);
+        throw new Error(`Database error: ${dbError.message}`);
+      }
 
       const uploadUrl = `${window.location.origin}/?event=${eventId}`;
       
@@ -114,11 +132,11 @@ export default function EventCreation() {
         description: `Event created successfully!`,
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating event:", error);
       toast({
         title: "Error",
-        description: "Failed to create event",
+        description: error.message || "Failed to create event. Please check console for details.",
         variant: "destructive",
       });
     } finally {
