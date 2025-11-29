@@ -366,7 +366,7 @@ export default function EventFiles() {
                     </TableCell>
                     <TableCell>{event.photoCount} photos</TableCell>
                     <TableCell>
-                      <div className="flex gap-4">
+                      <div className="flex gap-6">
                         <Button
                           variant="outline"
                           size="sm"
