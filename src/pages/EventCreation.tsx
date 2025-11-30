@@ -76,15 +76,31 @@ export default function EventCreation() {
   const createEvent = async () => {
     setLoading(true);
     try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Check if user is authenticated and session is valid
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
         toast({
           title: "Authentication required",
-          description: "Please log in to create events",
+          description: "Your session has expired. Please log in again.",
           variant: "destructive",
         });
         setLoading(false);
+        window.location.href = '/admin-login';
+        return;
+      }
+
+      // Refresh the session to ensure it's valid
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error("Session refresh error:", refreshError);
+        toast({
+          title: "Session error",
+          description: "Please log in again to continue.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        window.location.href = '/admin-login';
         return;
       }
 
