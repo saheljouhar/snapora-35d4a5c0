@@ -4,12 +4,15 @@ import { Calendar, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const Booking = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const eventId = searchParams.get('event');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -51,15 +54,14 @@ const Booking = () => {
         description: "We've received your booking request and will contact you within 24 hours.",
       });
 
-      // Reset form
-      setFormData({
-        fullName: '',
-        phone: '',
-        email: '',
-        eventType: '',
-        location: '',
-        eventDate: ''
-      });
+      // Redirect back to event page or homepage after a short delay
+      setTimeout(() => {
+        if (eventId) {
+          navigate(`/?event=${eventId}`);
+        } else {
+          navigate('/');
+        }
+      }, 1500);
 
     } catch (error) {
       console.error('Error submitting booking:', error);
@@ -77,7 +79,7 @@ const Booking = () => {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b px-4 py-6 relative">
-        <Link to="/" className="back-btn p-2 hover:bg-gray-100 rounded-full transition-colors absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+        <Link to={eventId ? `/?event=${eventId}` : "/"} className="back-btn p-2 hover:bg-gray-100 rounded-full transition-colors absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="max-w-md mx-auto">

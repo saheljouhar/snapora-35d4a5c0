@@ -4,7 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
-const BusinessCard = () => {
+interface BusinessCardProps {
+  eventId?: string | null;
+}
+
+const BusinessCard = ({ eventId }: BusinessCardProps) => {
   return (
     <section className="py-16 px-4 bg-gradient-to-br from-gray-50 to-white">
       <div className="max-w-4xl mx-auto">
@@ -69,7 +73,7 @@ const BusinessCard = () => {
                   Let us capture your special moments with our professional photo-sharing experience.
                 </p>
                 
-                <Link to="/booking">
+                <Link to={eventId ? `/booking?event=${eventId}` : "/booking"}>
                   <Button
                     className="cta-button bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     style={{ 
