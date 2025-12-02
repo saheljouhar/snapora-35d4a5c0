@@ -202,7 +202,7 @@ const Index = () => {
 
       {/* Business Card Section */}
       <div className="relative">
-        <BusinessCard />
+        <BusinessCard eventId={eventId} />
         
         {/* Footer with Snapora branding */}
         <footer className="bg-gray-50 py-8 px-4 pb-20">
