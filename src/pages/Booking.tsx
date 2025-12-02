@@ -19,6 +19,7 @@ const Booking = () => {
     phone: '',
     email: '',
     eventType: '',
+    customEventType: '',
     location: '',
     eventDate: ''
   });
@@ -41,7 +42,7 @@ const Booking = () => {
           client_name: formData.fullName,
           phone: formData.phone,
           email: formData.email,
-          event_type: formData.eventType,
+          event_type: formData.eventType === 'other' ? formData.customEventType : formData.eventType,
           event_location: formData.location,
           event_date: formData.eventDate,
           status: 'Pending'
@@ -165,12 +166,31 @@ const Booking = () => {
                 >
                   <option value="">Select event type</option>
                   <option value="wedding">Wedding</option>
-                  <option value="corporate">Corporate</option>
-                  <option value="birthday">Birthday</option>
                   <option value="engagement">Engagement</option>
-                  <option value="graduation">Graduation</option>
+                  <option value="sangeet_mehendi">Sangeet/Mehendi</option>
+                  <option value="reception">Reception</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
+
+              {formData.eventType === 'other' && (
+                <div>
+                  <Label htmlFor="customEventType" className="text-sm font-medium text-gray-700">
+                    Please specify event type *
+                  </Label>
+                  <Input
+                    id="customEventType"
+                    name="customEventType"
+                    type="text"
+                    value={formData.customEventType || ''}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
+                    style={{ fontSize: '16px' }}
+                    placeholder="Enter your event type"
+                  />
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="location" className="text-sm font-medium text-gray-700">
