@@ -67,17 +67,31 @@ export default function BookingManagement() {
       const { data, error: fetchError } = await supabase
         .from('Bookings')
         .select('*')
-        .order('id', { ascending: false });
+        .order('submission_date', { ascending: false });
 
-      console.log("Bookings fetch result:", { data, fetchError });
+      if (fetchError) {
+        console.error("Bookings fetch error:", fetchError);
+        toast({
+          title: "Could not load bookings",
+          description: "Could not load bookings. Check your connection.",
+          variant: "destructive",
+        });
+        setBookings([]);
+        return;
+      }
 
-      if (fetchError) throw fetchError;
-      setBookings(data || []);
+      if (!data || data.length === 0) {
+        console.log("No bookings yet.");
+        setBookings([]);
+        return;
+      }
+
+      setBookings(data);
     } catch (error) {
       console.error("Error fetching bookings:", error);
       toast({
-        title: "Error loading bookings",
-        description: "We couldn't load booking data. Please try refreshing or re-login.",
+        title: "Could not load bookings",
+        description: "Could not load bookings. Check your connection.",
         variant: "destructive",
       });
     } finally {
