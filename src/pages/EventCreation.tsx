@@ -40,6 +40,15 @@ export default function EventCreation() {
   const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowed.includes(file.type.toLowerCase())) {
+        toast({
+          title: "Unsupported file",
+          description: "Only JPG, PNG, or WEBP photos are allowed.",
+          variant: "destructive",
+        });
+        return;
+      }
       setPosterFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -48,6 +57,39 @@ export default function EventCreation() {
       reader.readAsDataURL(file);
     }
   };
+
+  // Compress poster image to JPEG (max 1200px on longest side, quality 0.75)
+  const compressPoster = (file: File): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 1200;
+          let { width, height } = img;
+          if (width > height) {
+            if (width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
+          } else {
+            if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject(new Error('Canvas not supported'));
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => (blob ? resolve(blob) : reject(new Error('Compression failed'))),
+            'image/jpeg',
+            0.75
+          );
+        };
+        img.onerror = () => reject(new Error('Could not read image'));
+        img.src = ev.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Could not read file'));
+      reader.readAsDataURL(file);
+    });
 
   const handleStep1Next = () => {
     if (!eventName.trim() || !displayName.trim()) {
@@ -106,22 +148,34 @@ export default function EventCreation() {
 
       const eventId = generateEventId();
       
-      // Upload poster to storage
+      // Compress + upload poster to storage as posters/{eventId}_poster.jpg
       let posterUrl = "";
       if (posterFile) {
-        const fileExt = posterFile.name.split('.').pop();
-        const fileName = `${eventId}_poster.${fileExt}`;
-        
+        let posterBlob: Blob;
+        try {
+          posterBlob = await compressPoster(posterFile);
+        } catch (err: any) {
+          throw new Error(`Could not prepare poster: ${err.message || 'compression failed'}`);
+        }
+
+        const fileName = `${eventId}_poster.jpg`;
+
         const { error: uploadError } = await supabase.storage
           .from('posters')
-          .upload(fileName, posterFile, { upsert: true });
+          .upload(fileName, posterBlob, {
+            upsert: true,
+            contentType: 'image/jpeg',
+          });
 
         if (uploadError) {
           console.error("Storage upload error:", uploadError);
-          throw new Error(`Upload failed: ${uploadError.message}`);
+          throw new Error(`Poster upload failed: ${uploadError.message}`);
         }
 
-        posterUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${fileName}`;
+        const { data: urlData } = supabase.storage
+          .from('posters')
+          .getPublicUrl(fileName);
+        posterUrl = urlData.publicUrl;
       }
 
       // Insert event into database
@@ -143,15 +197,15 @@ export default function EventCreation() {
       }
 
       const uploadUrl = `${window.location.origin}/?event=${eventId}`;
-      
+
       setCreatedEvent({
         id: eventId,
         uploadUrl
       });
 
       toast({
-        title: "Success",
-        description: `Event created successfully!`,
+        title: "Event created!",
+        description: "Event created! Your QR code is ready.",
       });
 
     } catch (error: any) {
@@ -329,7 +383,7 @@ export default function EventCreation() {
                     <input
                       id="poster"
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
                       onChange={handlePosterChange}
                       className="hidden"
                     />

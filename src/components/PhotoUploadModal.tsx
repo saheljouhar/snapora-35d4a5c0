@@ -6,6 +6,42 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+// Compress an image file to JPEG (max 1200px on longest side, quality 0.75)
+async function compressImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > height) {
+          if (width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
+        } else {
+          if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas not supported'));
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error('Compression failed'))),
+          'image/jpeg',
+          0.75
+        );
+      };
+      img.onerror = () => reject(new Error('Could not read image'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 interface PhotoUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,6 +51,7 @@ interface PhotoUploadModalProps {
 
 const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadModalProps) => {
   const [uploading, setUploading] = useState(false);
+  const [optimising, setOptimising] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
@@ -22,95 +59,41 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
 
   if (!isOpen) return null;
 
-  const handleFileUpload = (files: FileList | null) => {
+  const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    
+
+    // Validate file types
+    const invalid = Array.from(files).find(
+      (f) => !ALLOWED_IMAGE_TYPES.includes(f.type.toLowerCase())
+    );
+    if (invalid) {
+      toast({
+        title: "Unsupported file",
+        description: "Only JPG, PNG, or WEBP photos are allowed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSelectedFiles(files);
-    
-    // Create preview URLs for all selected files with size check and compression
-    const previewUrls: string[] = [];
-    
-    Array.from(files).forEach((file) => {
-      // Check file size - if larger than 2MB, we'll still create preview but may need compression
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        toast({
-          title: "File too large",
-          description: `${file.name} is over 10MB. Please choose a smaller file.`,
-          variant: "destructive",
-        });
-        return;
+    setOptimising(true);
+
+    try {
+      const previewUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const blob = await compressImage(file);
+        previewUrls.push(URL.createObjectURL(blob));
       }
-      
-      // For large files (>2MB), create a dynamic compressed preview
-      if (file.size > 2 * 1024 * 1024) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        
-        img.onload = () => {
-          // Calculate dynamic dimensions based on original size and file size
-          let { width, height } = img;
-          const originalPixels = width * height;
-          
-          // Dynamic scaling based on file size and original dimensions
-          let scaleFactor = 1;
-          if (file.size > 8 * 1024 * 1024) { // >8MB
-            scaleFactor = Math.min(0.4, Math.sqrt(2000000 / originalPixels));
-          } else if (file.size > 5 * 1024 * 1024) { // >5MB
-            scaleFactor = Math.min(0.5, Math.sqrt(3000000 / originalPixels));
-          } else if (file.size > 3 * 1024 * 1024) { // >3MB
-            scaleFactor = Math.min(0.6, Math.sqrt(4000000 / originalPixels));
-          } else { // 2-3MB
-            scaleFactor = Math.min(0.7, Math.sqrt(5000000 / originalPixels));
-          }
-          
-          // Apply the scale factor
-          width = Math.floor(width * scaleFactor);
-          height = Math.floor(height * scaleFactor);
-          
-          // Ensure minimum readable size
-          const minDimension = 200;
-          if (width < minDimension && height < minDimension) {
-            if (width > height) {
-              width = minDimension;
-              height = Math.floor((height * minDimension) / width);
-            } else {
-              height = minDimension;
-              width = Math.floor((width * minDimension) / height);
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          // Draw and compress with dynamic quality
-          const quality = file.size > 5 * 1024 * 1024 ? 0.7 : 0.8;
-          ctx?.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const compressedUrl = URL.createObjectURL(blob);
-              previewUrls.push(compressedUrl);
-              setPreviewImages([...previewUrls]);
-            }
-          }, 'image/jpeg', quality);
-        };
-        
-        img.onerror = () => {
-          // Fallback: use original file for preview if compression fails
-          previewUrls.push(URL.createObjectURL(file));
-          setPreviewImages([...previewUrls]);
-        };
-        
-        img.src = URL.createObjectURL(file);
-      } else {
-        // For smaller files, use original
-        previewUrls.push(URL.createObjectURL(file));
-      }
-    });
-    
-    // Set previews for smaller files immediately
-    if (previewUrls.length > 0) {
       setPreviewImages(previewUrls);
+    } catch (err: any) {
+      console.error('Optimisation error:', err);
+      toast({
+        title: "Could not prepare photo",
+        description: err.message || "Please try a different image.",
+        variant: "destructive",
+      });
+    } finally {
+      setOptimising(false);
     }
   };
 
@@ -123,60 +106,57 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       });
       return;
     }
-    
+
     setUploading(true);
-    
+
     try {
       const uploadPromises = Array.from(selectedFiles).map(async (file, index) => {
-        // Generate unique filename with timestamp
+        // Compress to JPEG (max 1200px longest side, quality 0.75)
+        const compressedBlob = await compressImage(file);
+
         const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(2, 15);
-        const fileExtension = file.name.split('.').pop() || 'jpg';
-        const fileName = `${timestamp}_${randomId}_${index}.${fileExtension}`;
+        const baseName = (file.name.split('.').slice(0, -1).join('.') || 'photo')
+          .replace(/[^a-zA-Z0-9_-]/g, '_');
+        const fileName = `${timestamp}_${index}_${baseName}.jpg`;
         const filePath = `${eventId}/${fileName}`;
-        
-        // Upload to storage
+
         const { error: uploadError } = await supabase.storage
           .from('event_photos')
-          .upload(filePath, file, {
+          .upload(filePath, compressedBlob, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
+            contentType: 'image/jpeg',
           });
-        
-        if (uploadError) {
-          throw uploadError;
-        }
-        
-        // Get public URL
+
+        if (uploadError) throw uploadError;
+
         const { data: { publicUrl } } = supabase.storage
           .from('event_photos')
           .getPublicUrl(filePath);
-        
-        // Get device info
-        const deviceInfo = navigator.userAgent.includes('Mobile') 
-          ? 'Mobile Device' 
+
+        const deviceInfo = navigator.userAgent.includes('Mobile')
+          ? 'Mobile Device'
           : 'Desktop';
-        
-        // Insert record into event_photos table
+
         const { error: dbError } = await supabase
           .from('event_photos')
           .insert({
             event_id: eventId,
             photo_url: publicUrl,
             thumbnail_url: publicUrl,
-            device_info: deviceInfo
+            device_info: deviceInfo,
           });
-        
+
         if (dbError) {
           console.error('Database insert error:', dbError);
           throw dbError;
         }
-        
+
         return filePath;
       });
-      
+
       await Promise.all(uploadPromises);
-      
+
       setUploading(false);
       setUploaded(true);
       
@@ -201,7 +181,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       
       toast({
         title: "Upload failed",
-        description: error.message || "Failed to upload photos. Please try again.",
+        description: "Upload failed. Please try again.",
         variant: "destructive",
       });
     }
@@ -217,7 +197,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     // Create file input for camera
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
     input.capture = 'environment'; // Use back camera
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
@@ -229,7 +209,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   const handleGalleryAccess = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
     input.multiple = true;
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
@@ -265,7 +245,12 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
 
           {/* Content */}
           <div className="p-6">
-            {uploading ? (
+            {optimising ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-rose-500 mx-auto mb-4"></div>
+                <p className="text-gray-600 text-sm">Optimising photo…</p>
+              </div>
+            ) : uploading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
                 <p className="text-gray-600">Uploading your photos...</p>
