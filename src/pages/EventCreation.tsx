@@ -383,7 +383,7 @@ export default function EventCreation() {
                     <input
                       id="poster"
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
                       onChange={handlePosterChange}
                       className="hidden"
                     />
