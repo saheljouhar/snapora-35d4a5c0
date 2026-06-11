@@ -148,22 +148,34 @@ export default function EventCreation() {
 
       const eventId = generateEventId();
       
-      // Upload poster to storage
+      // Compress + upload poster to storage as posters/{eventId}_poster.jpg
       let posterUrl = "";
       if (posterFile) {
-        const fileExt = posterFile.name.split('.').pop();
-        const fileName = `${eventId}_poster.${fileExt}`;
-        
+        let posterBlob: Blob;
+        try {
+          posterBlob = await compressPoster(posterFile);
+        } catch (err: any) {
+          throw new Error(`Could not prepare poster: ${err.message || 'compression failed'}`);
+        }
+
+        const fileName = `${eventId}_poster.jpg`;
+
         const { error: uploadError } = await supabase.storage
           .from('posters')
-          .upload(fileName, posterFile, { upsert: true });
+          .upload(fileName, posterBlob, {
+            upsert: true,
+            contentType: 'image/jpeg',
+          });
 
         if (uploadError) {
           console.error("Storage upload error:", uploadError);
-          throw new Error(`Upload failed: ${uploadError.message}`);
+          throw new Error(`Poster upload failed: ${uploadError.message}`);
         }
 
-        posterUrl = `https://dydzqautscblrrcvlreh.supabase.co/storage/v1/object/public/posters/${fileName}`;
+        const { data: urlData } = supabase.storage
+          .from('posters')
+          .getPublicUrl(fileName);
+        posterUrl = urlData.publicUrl;
       }
 
       // Insert event into database
@@ -185,15 +197,15 @@ export default function EventCreation() {
       }
 
       const uploadUrl = `${window.location.origin}/?event=${eventId}`;
-      
+
       setCreatedEvent({
         id: eventId,
         uploadUrl
       });
 
       toast({
-        title: "Success",
-        description: `Event created successfully!`,
+        title: "Event created!",
+        description: "Event created! Your QR code is ready.",
       });
 
     } catch (error: any) {
