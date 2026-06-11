@@ -181,7 +181,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       
       toast({
         title: "Upload failed",
-        description: error.message || "Failed to upload photos. Please try again.",
+        description: "Upload failed. Please try again.",
         variant: "destructive",
       });
     }
