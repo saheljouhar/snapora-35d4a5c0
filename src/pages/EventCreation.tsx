@@ -40,6 +40,15 @@ export default function EventCreation() {
   const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowed.includes(file.type.toLowerCase())) {
+        toast({
+          title: "Unsupported file",
+          description: "Only JPG, PNG, or WEBP photos are allowed.",
+          variant: "destructive",
+        });
+        return;
+      }
       setPosterFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -48,6 +57,39 @@ export default function EventCreation() {
       reader.readAsDataURL(file);
     }
   };
+
+  // Compress poster image to JPEG (max 1200px on longest side, quality 0.75)
+  const compressPoster = (file: File): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 1200;
+          let { width, height } = img;
+          if (width > height) {
+            if (width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
+          } else {
+            if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject(new Error('Canvas not supported'));
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => (blob ? resolve(blob) : reject(new Error('Compression failed'))),
+            'image/jpeg',
+            0.75
+          );
+        };
+        img.onerror = () => reject(new Error('Could not read image'));
+        img.src = ev.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Could not read file'));
+      reader.readAsDataURL(file);
+    });
 
   const handleStep1Next = () => {
     if (!eventName.trim() || !displayName.trim()) {
