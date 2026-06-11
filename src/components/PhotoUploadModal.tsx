@@ -51,6 +51,7 @@ interface PhotoUploadModalProps {
 
 const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadModalProps) => {
   const [uploading, setUploading] = useState(false);
+  const [optimising, setOptimising] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
