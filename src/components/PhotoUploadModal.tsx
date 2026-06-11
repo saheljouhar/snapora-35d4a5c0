@@ -245,7 +245,12 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
 
           {/* Content */}
           <div className="p-6">
-            {uploading ? (
+            {optimising ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-rose-500 mx-auto mb-4"></div>
+                <p className="text-gray-600 text-sm">Optimising photo…</p>
+              </div>
+            ) : uploading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
                 <p className="text-gray-600">Uploading your photos...</p>
