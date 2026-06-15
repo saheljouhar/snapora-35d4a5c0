@@ -2,43 +2,53 @@ import { useState } from 'react';
 import { Camera, Upload, X, Image as ImageIcon, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const SUPABASE_URL = 'https://dydzqautscblrrcvlreh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5ZHpxYXV0c2NibHJyY3ZscmVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NTUyMTEsImV4cCI6MjA3MDMzMTIxMX0.ammrjtunik84JOH9pWwy9G0pOfU1aRLyp0SEHpvHZPc';
 
-// Compress an image file to JPEG (max 1200px on longest side, quality 0.75)
-async function compressImage(file: File): Promise<Blob> {
+// Upload a file with XHR so we can track progress.
+function uploadWithProgress(
+  filePath: string,
+  file: File,
+  onProgress: (pct: number) => void
+): Promise<void> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 1200;
-        let { width, height } = img;
-        if (width > height) {
-          if (width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
-        } else {
-          if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return reject(new Error('Canvas not supported'));
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => (blob ? resolve(blob) : reject(new Error('Compression failed'))),
-          'image/jpeg',
-          0.75
-        );
-      };
-      img.onerror = () => reject(new Error('Could not read image'));
-      img.src = e.target?.result as string;
+    const xhr = new XMLHttpRequest();
+    const url = `${SUPABASE_URL}/storage/v1/object/event_photos/${filePath}`;
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+    xhr.setRequestHeader('Authorization', `Bearer ${SUPABASE_ANON_KEY}`);
+    xhr.setRequestHeader('x-upsert', 'false');
+    xhr.setRequestHeader('Cache-Control', '3600');
+    if (file.type) xhr.setRequestHeader('Content-Type', file.type);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
     };
-    reader.onerror = () => reject(new Error('Could not read file'));
-    reader.readAsDataURL(file);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        let message = `Upload failed (${xhr.status})`;
+        try {
+          const parsed = JSON.parse(xhr.responseText);
+          message = parsed.message || parsed.error || message;
+        } catch {}
+        const err: any = new Error(message);
+        err.status = xhr.status;
+        reject(err);
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.send(file);
   });
 }
 
@@ -51,7 +61,7 @@ interface PhotoUploadModalProps {
 
 const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadModalProps) => {
   const [uploading, setUploading] = useState(false);
-  const [optimising, setOptimising] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploaded, setUploaded] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
@@ -63,10 +73,10 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     if (!files || files.length === 0) return;
 
     // Validate file types
-    const invalid = Array.from(files).find(
+    const invalidType = Array.from(files).find(
       (f) => !ALLOWED_IMAGE_TYPES.includes(f.type.toLowerCase())
     );
-    if (invalid) {
+    if (invalidType) {
       toast({
         title: "Unsupported file",
         description: "Only JPG, PNG, or WEBP photos are allowed.",
@@ -75,26 +85,20 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       return;
     }
 
-    setSelectedFiles(files);
-    setOptimising(true);
-
-    try {
-      const previewUrls: string[] = [];
-      for (const file of Array.from(files)) {
-        const blob = await compressImage(file);
-        previewUrls.push(URL.createObjectURL(blob));
-      }
-      setPreviewImages(previewUrls);
-    } catch (err: any) {
-      console.error('Optimisation error:', err);
+    // Validate file size (50MB)
+    const tooLarge = Array.from(files).find((f) => f.size > MAX_FILE_SIZE);
+    if (tooLarge) {
       toast({
-        title: "Could not prepare photo",
-        description: err.message || "Please try a different image.",
+        title: "Photo too large",
+        description: "Photo too large. Please contact the event organiser.",
         variant: "destructive",
       });
-    } finally {
-      setOptimising(false);
+      return;
     }
+
+    setSelectedFiles(files);
+    const previewUrls = Array.from(files).map((f) => URL.createObjectURL(f));
+    setPreviewImages(previewUrls);
   };
 
   const handleConfirmUpload = async () => {
@@ -108,27 +112,25 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     }
 
     setUploading(true);
+    setUploadProgress(0);
+
+    const files = Array.from(selectedFiles);
+    const totalFiles = files.length;
 
     try {
-      const uploadPromises = Array.from(selectedFiles).map(async (file, index) => {
-        // Compress to JPEG (max 1200px longest side, quality 0.75)
-        const compressedBlob = await compressImage(file);
-
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
         const timestamp = Date.now();
         const baseName = (file.name.split('.').slice(0, -1).join('.') || 'photo')
           .replace(/[^a-zA-Z0-9_-]/g, '_');
-        const fileName = `${timestamp}_${index}_${baseName}.jpg`;
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const fileName = `${timestamp}_${index}_${baseName}.${ext}`;
         const filePath = `${eventId}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('event_photos')
-          .upload(filePath, compressedBlob, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: 'image/jpeg',
-          });
-
-        if (uploadError) throw uploadError;
+        await uploadWithProgress(filePath, file, (pct) => {
+          const overall = Math.round(((index + pct / 100) / totalFiles) * 100);
+          setUploadProgress(overall);
+        });
 
         const { data: { publicUrl } } = supabase.storage
           .from('event_photos')
@@ -151,37 +153,42 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
           console.error('Database insert error:', dbError);
           throw dbError;
         }
+      }
 
-        return filePath;
-      });
-
-      await Promise.all(uploadPromises);
-
+      setUploadProgress(100);
       setUploading(false);
       setUploaded(true);
-      
-      // Clean up preview URLs
-      previewImages.forEach(url => URL.revokeObjectURL(url));
-      
+
+      previewImages.forEach((url) => URL.revokeObjectURL(url));
+
       toast({
         title: "Success!",
-        description: `${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''} uploaded successfully!`,
+        description: "Photo uploaded successfully!",
       });
-      
-      // Show success state then trigger completion
+
       setTimeout(() => {
         onUpload();
         setUploaded(false);
         setPreviewImages([]);
         setSelectedFiles(null);
+        setUploadProgress(0);
       }, 1500);
     } catch (error: any) {
       console.error('Upload error:', error);
       setUploading(false);
-      
+      setUploadProgress(0);
+
+      const msg: string = error?.message || '';
+      const status: number | undefined = error?.status;
+      const isSizeIssue =
+        status === 413 ||
+        /payload too large|exceeded|maximum allowed size|too large/i.test(msg);
+
       toast({
         title: "Upload failed",
-        description: "Upload failed. Please try again.",
+        description: isSizeIssue
+          ? "Photo too large. Please contact the event organiser."
+          : msg || "Upload failed. Please try again.",
         variant: "destructive",
       });
     }
@@ -194,11 +201,10 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   };
 
   const handleCameraAccess = () => {
-    // Create file input for camera
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
-    input.capture = 'environment'; // Use back camera
+    input.capture = 'environment';
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
       handleFileUpload(files);
@@ -224,6 +230,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     setSelectedFiles(null);
     setUploading(false);
     setUploaded(false);
+    setUploadProgress(0);
     onClose();
   };
 
@@ -245,22 +252,19 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
 
           {/* Content */}
           <div className="p-6">
-            {optimising ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-rose-500 mx-auto mb-4"></div>
-                <p className="text-gray-600 text-sm">Optimising photo…</p>
-              </div>
-            ) : uploading ? (
+            {uploading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Uploading your photos...</p>
+                <p className="text-gray-600 mb-4">Uploading your photos...</p>
+                <Progress value={uploadProgress} className="w-full" />
+                <p className="text-sm text-gray-500 mt-2">{uploadProgress}%</p>
               </div>
             ) : uploaded ? (
               <div className="text-center py-8">
                 <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Check className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-gray-800 font-medium">Photos uploaded successfully!</p>
+                <p className="text-gray-800 font-medium">Photo uploaded successfully!</p>
                 <p className="text-gray-600 text-sm">Thank you for sharing your memories</p>
               </div>
             ) : previewImages.length > 0 ? (
@@ -293,7 +297,6 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                     )}
                   </Carousel>
                   
-                  {/* Image Counter */}
                   {previewImages.length > 1 && (
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
                       1 / {previewImages.length}
@@ -326,7 +329,6 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                   Choose how you'd like to add photos
                 </p>
 
-                {/* Camera Button */}
                 <button
                   onClick={handleCameraAccess}
                   className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-2xl p-6 flex items-center justify-center gap-4 transition-all duration-300 hover:scale-105 shadow-lg"
@@ -339,7 +341,6 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                   </div>
                 </button>
 
-                {/* Gallery Button */}
                 <button
                   onClick={handleGalleryAccess}
                   className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-2xl p-6 flex items-center justify-center gap-4 transition-all duration-300 hover:scale-105 shadow-lg"
@@ -353,7 +354,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                 </button>
 
                 <p className="text-xs text-gray-500 text-center mt-4">
-                  Photos will be compressed for faster sharing. Max file size: 10MB
+                  Photos upload at full quality. Max file size: 50MB
                 </p>
               </div>
             )}
