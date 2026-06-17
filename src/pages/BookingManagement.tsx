@@ -307,7 +307,11 @@ export default function BookingManagement() {
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8">
                     <p className="text-muted-foreground">
-                      {searchTerm || statusFilter !== "all" ? "No bookings match your filters" : "No bookings yet."}
+                      {fetchErrorMessage
+                        ? "Could not load bookings due to an error (see message above)."
+                        : searchTerm || statusFilter !== "all"
+                          ? "No bookings match your filters"
+                          : "No bookings yet."}
                     </p>
                   </TableCell>
                 </TableRow>
