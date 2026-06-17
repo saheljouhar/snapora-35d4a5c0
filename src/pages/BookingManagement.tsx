@@ -242,6 +242,12 @@ export default function BookingManagement() {
         <h1 className="text-3xl font-bold">Booking Management</h1>
       </div>
 
+      {fetchErrorMessage && (
+        <div className="text-red-600 font-medium">
+          Failed to load bookings: {fetchErrorMessage}
+        </div>
+      )}
+
       {/* Filters */}
       <Card>
         <CardHeader>
