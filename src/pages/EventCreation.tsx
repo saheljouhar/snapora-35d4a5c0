@@ -38,24 +38,36 @@ export default function EventCreation() {
   };
 
   const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!allowed.includes(file.type.toLowerCase())) {
-        toast({
-          title: "Unsupported file",
-          description: "Only JPG, PNG, or WEBP photos are allowed.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setPosterFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPosterPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    let file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const fileType = file.type?.toLowerCase() || '';
+
+    // Mobile cameras often provide blobs with missing or generic names/types
+    const rawName = file.name || '';
+    const hasValidName = rawName && rawName !== 'blob' && /\.[a-zA-Z0-9]+$/.test(rawName);
+    const hasValidType = allowedTypes.includes(fileType);
+
+    if (!hasValidType && !hasValidName) {
+      toast({
+        title: "Unsupported file",
+        description: "Only JPG, PNG, or WEBP photos are allowed.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    if (!hasValidName || !hasValidType) {
+      file = new File([file], `poster_${Date.now()}.jpg`, { type: 'image/jpeg' });
+    }
+
+    setPosterFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPosterPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   // Compress poster image to JPEG (max 1200px on longest side, quality 0.75)
