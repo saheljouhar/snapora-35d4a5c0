@@ -63,38 +63,49 @@ export default function BookingManagement() {
   }, [bookings, statusFilter, searchTerm]);
 
   const fetchBookings = async () => {
+    setFetchErrorMessage(null);
     try {
       console.log("Fetching bookings...");
-      const { data, error: fetchError } = await supabase
+
+      // Ensure an authenticated session is active before fetching
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      console.log("Supabase session:", { sessionData, sessionError });
+
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        setFetchErrorMessage(sessionError.message);
+        setBookings([]);
+        return;
+      }
+
+      if (!sessionData?.session) {
+        const msg = "You must be signed in to view bookings.";
+        console.error(msg);
+        setFetchErrorMessage(msg);
+        setBookings([]);
+        return;
+      }
+
+      const response = await supabase
         .from('Bookings')
-        .select('*')
+        .select('client_name, phone, email, event_type, event_location, event_date, submission_date, status, id')
         .order('submission_date', { ascending: false });
+
+      console.log("Supabase Bookings Response:", response);
+
+      const { data, error: fetchError } = response;
 
       if (fetchError) {
         console.error("Bookings fetch error:", fetchError);
-        toast({
-          title: "Could not load bookings",
-          description: "Could not load bookings. Check your connection.",
-          variant: "destructive",
-        });
+        setFetchErrorMessage(fetchError.message);
         setBookings([]);
         return;
       }
 
-      if (!data || data.length === 0) {
-        console.log("No bookings yet.");
-        setBookings([]);
-        return;
-      }
-
-      setBookings(data);
-    } catch (error) {
+      setBookings(data || []);
+    } catch (error: any) {
       console.error("Error fetching bookings:", error);
-      toast({
-        title: "Could not load bookings",
-        description: "Could not load bookings. Check your connection.",
-        variant: "destructive",
-      });
+      setFetchErrorMessage(error?.message || String(error));
     } finally {
       setLoading(false);
     }
