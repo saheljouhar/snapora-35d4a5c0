@@ -321,6 +321,9 @@ export default function EventFiles() {
         variant: "destructive",
       });
     }
+  };
+
+
 
   if (loading) {
     return <div className="p-6">Loading events...</div>;
