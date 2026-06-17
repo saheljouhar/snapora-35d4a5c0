@@ -17,6 +17,38 @@ const Index = () => {
   const [eventId, setEventId] = useState<string | null>(null);
   const [eventNotFound, setEventNotFound] = useState(false);
   const [eventName, setEventName] = useState<string>('');
+  const [hasLivePhotos, setHasLivePhotos] = useState(false);
+
+  // Track if this event has any uploaded photos (for showing demo vs live gallery)
+  useEffect(() => {
+    if (!eventId) {
+      setHasLivePhotos(false);
+      return;
+    }
+
+    const checkPhotoCount = async () => {
+      const { count } = await supabase
+        .from('event_photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', eventId);
+      setHasLivePhotos((count || 0) > 0);
+    };
+
+    checkPhotoCount();
+
+    const channel = supabase
+      .channel(`event-photos-count-${eventId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'event_photos', filter: `event_id=eq.${eventId}` },
+        () => setHasLivePhotos(true)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [eventId]);
 
   useEffect(() => {
     // Get event ID from URL parameter
@@ -189,16 +221,18 @@ const Index = () => {
       {/* Live Photo Feed Section */}
       <LivePhotoFeed eventId={eventId} eventName={eventName} />
 
-      {/* Photo Grid Section */}
-      <section className="py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Event Memories</h2>
-            <p className="text-gray-600">Beautiful moments captured by our guests</p>
+      {/* Photo Grid Section - demo placeholders, only shown when no live photos exist */}
+      {!hasLivePhotos && (
+        <section className="py-12 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Event Memories</h2>
+              <p className="text-gray-600">Beautiful moments captured by our guests</p>
+            </div>
+            <PhotoGrid />
           </div>
-          <PhotoGrid />
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Business Card Section */}
       <div className="relative">
@@ -224,18 +258,6 @@ const Index = () => {
               </Link>
             </div>
             
-            {/* Admin Link */}
-            <div id="admin-btn">
-              <Link to="/admin-login">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mx-auto block"
-                >
-                  Admin Dashboard
-                </Button>
-              </Link>
-            </div>
           </div>
         </footer>
       </div>

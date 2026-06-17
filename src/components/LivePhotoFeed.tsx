@@ -185,7 +185,7 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-              {eventName} Wedding Photos
+              Live Memories
             </h2>
             <p className="text-gray-600">Live feed from your guests</p>
           </div>
@@ -205,7 +205,7 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-              {eventName} Wedding Photos
+              Live Memories
             </h2>
             <p className="text-gray-600">Live feed from guests • {photos.length} photos shared</p>
           </div>
