@@ -31,6 +31,7 @@ export default function BookingManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [fetchErrorMessage, setFetchErrorMessage] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState<number | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -62,38 +63,49 @@ export default function BookingManagement() {
   }, [bookings, statusFilter, searchTerm]);
 
   const fetchBookings = async () => {
+    setFetchErrorMessage(null);
     try {
       console.log("Fetching bookings...");
-      const { data, error: fetchError } = await supabase
+
+      // Ensure an authenticated session is active before fetching
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      console.log("Supabase session:", { sessionData, sessionError });
+
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        setFetchErrorMessage(sessionError.message);
+        setBookings([]);
+        return;
+      }
+
+      if (!sessionData?.session) {
+        const msg = "You must be signed in to view bookings.";
+        console.error(msg);
+        setFetchErrorMessage(msg);
+        setBookings([]);
+        return;
+      }
+
+      const response = await supabase
         .from('Bookings')
-        .select('*')
+        .select('client_name, phone, email, event_type, event_location, event_date, submission_date, status, id')
         .order('submission_date', { ascending: false });
+
+      console.log("Supabase Bookings Response:", response);
+
+      const { data, error: fetchError } = response;
 
       if (fetchError) {
         console.error("Bookings fetch error:", fetchError);
-        toast({
-          title: "Could not load bookings",
-          description: "Could not load bookings. Check your connection.",
-          variant: "destructive",
-        });
+        setFetchErrorMessage(fetchError.message);
         setBookings([]);
         return;
       }
 
-      if (!data || data.length === 0) {
-        console.log("No bookings yet.");
-        setBookings([]);
-        return;
-      }
-
-      setBookings(data);
-    } catch (error) {
+      setBookings(data || []);
+    } catch (error: any) {
       console.error("Error fetching bookings:", error);
-      toast({
-        title: "Could not load bookings",
-        description: "Could not load bookings. Check your connection.",
-        variant: "destructive",
-      });
+      setFetchErrorMessage(error?.message || String(error));
     } finally {
       setLoading(false);
     }
@@ -230,6 +242,12 @@ export default function BookingManagement() {
         <h1 className="text-3xl font-bold">Booking Management</h1>
       </div>
 
+      {fetchErrorMessage && (
+        <div className="text-red-600 font-medium">
+          Failed to load bookings: {fetchErrorMessage}
+        </div>
+      )}
+
       {/* Filters */}
       <Card>
         <CardHeader>
@@ -289,7 +307,11 @@ export default function BookingManagement() {
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8">
                     <p className="text-muted-foreground">
-                      {searchTerm || statusFilter !== "all" ? "No bookings match your filters" : "No bookings yet."}
+                      {fetchErrorMessage
+                        ? "Could not load bookings due to an error (see message above)."
+                        : searchTerm || statusFilter !== "all"
+                          ? "No bookings match your filters"
+                          : "No bookings yet."}
                     </p>
                   </TableCell>
                 </TableRow>
