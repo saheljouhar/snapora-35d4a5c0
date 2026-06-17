@@ -25,6 +25,7 @@ interface Event {
   display_name: string;
   poster_url: string;
   date: string;
+  status?: string | null;
   photoCount?: number;
 }
 
@@ -301,6 +302,29 @@ export default function EventFiles() {
     }
   };
 
+  const toggleEventStatus = async (event: Event) => {
+    const newStatus = event.status === 'active' ? 'closed' : 'active';
+    // Optimistic update
+    setEvents(prev => prev.map(e => e.event_id === event.event_id ? { ...e, status: newStatus } : e));
+
+    const { error } = await supabase
+      .from('Events')
+      .update({ status: newStatus })
+      .eq('event_id', event.event_id);
+
+    if (error) {
+      // Revert
+      setEvents(prev => prev.map(e => e.event_id === event.event_id ? { ...e, status: event.status } : e));
+      toast({
+        title: "Error",
+        description: "Failed to update event status",
+        variant: "destructive",
+      });
+    }
+  };
+
+
+
   if (loading) {
     return <div className="p-6">Loading events...</div>;
   }
@@ -339,13 +363,14 @@ export default function EventFiles() {
                 <TableHead>Event</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Photos</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="w-[260px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredEvents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
+                  <TableCell colSpan={5} className="text-center py-8">
                     <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">
                       {searchTerm ? "No events match your search" : "No events found"}
@@ -365,6 +390,19 @@ export default function EventFiles() {
                       {event.date ? new Date(event.date).toLocaleDateString() : "Date Not Set"}
                     </TableCell>
                     <TableCell>{event.photoCount} photos</TableCell>
+                    <TableCell>
+                      <button
+                        type="button"
+                        onClick={() => toggleEventStatus(event)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                          event.status === 'active'
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        {event.status === 'active' ? 'Active' : 'Closed'}
+                      </button>
+                    </TableCell>
                     <TableCell className="w-[260px]">
                       <div className="flex justify-end gap-8">
                         <Button
