@@ -268,7 +268,7 @@ const Index = () => {
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
         {eventStatus === 'closed' ? (
           <div className="bg-white/95 backdrop-blur-sm border border-rose-200 text-gray-700 text-sm md:text-base text-center px-5 py-3 rounded-lg shadow-lg max-w-md">
-            This event has ended. Photo uploads are now closed. Thank you for sharing your memories!
+            This event has ended. Thank you for sharing your memories!
           </div>
         ) : (
           <Button

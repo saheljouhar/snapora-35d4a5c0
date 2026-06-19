@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Search, FolderOpen, FileText, Trash2 } from "lucide-react";
+import { Download, FolderOpen, FileText, Trash2 } from "lucide-react";
 import JSZip from "jszip";
 import { jsPDF } from "jspdf";
 import {
@@ -31,8 +30,6 @@ interface Event {
 
 export default function EventFiles() {
   const [events, setEvents] = useState<Event[]>([]);
-  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [downloadingEvent, setDownloadingEvent] = useState<string | null>(null);
   const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
@@ -43,32 +40,23 @@ export default function EventFiles() {
     fetchEvents();
   }, []);
 
-  useEffect(() => {
-    const filtered = events.filter(event =>
-      event.event_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (event.name && event.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (event.display_name && event.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    setFilteredEvents(filtered);
-  }, [events, searchTerm]);
-
   const fetchEvents = async () => {
     try {
       const { data: eventsData, error } = await supabase
         .from('Events')
         .select('*')
+        .eq('status', 'closed')
         .order('event_id', { ascending: false });
 
       if (error) throw error;
 
-      // Get photo counts for each event
       const eventsWithCounts = await Promise.all(
         (eventsData || []).map(async (event) => {
           const { count } = await supabase
             .from('event_photos')
             .select('*', { count: 'exact', head: true })
             .eq('event_id', event.event_id);
-          
+
           return {
             ...event,
             photoCount: count || 0
@@ -92,7 +80,6 @@ export default function EventFiles() {
   const downloadEventPhotos = async (eventId: string) => {
     setDownloadingEvent(eventId);
     try {
-      // Fetch all photos for the event
       const { data: photos, error } = await supabase
         .from('event_photos')
         .select('photo_url')
@@ -113,10 +100,8 @@ export default function EventFiles() {
         description: `Creating ZIP file with ${photos.length} photos...`,
       });
 
-      // Create ZIP file
       const zip = new JSZip();
-      
-      // Download each photo and add to ZIP
+
       for (let i = 0; i < photos.length; i++) {
         const photo = photos[i];
         try {
@@ -129,10 +114,8 @@ export default function EventFiles() {
         }
       }
 
-      // Generate ZIP file
       const content = await zip.generateAsync({ type: "blob" });
-      
-      // Download ZIP
+
       const url = window.URL.createObjectURL(content);
       const link = document.createElement("a");
       link.href = url;
@@ -162,43 +145,36 @@ export default function EventFiles() {
   const generatePDFReport = async (event: Event) => {
     setGeneratingPDF(event.event_id);
     try {
-      // Fetch photos with upload dates
       const { data: photos } = await supabase
         .from('event_photos')
         .select('uploaded_at, device_info')
         .eq('event_id', event.event_id);
 
-      // Calculate storage (estimate)
-      const avgPhotoSize = 2.5; // MB
+      const avgPhotoSize = 2.5;
       const totalStorageMB = (event.photoCount || 0) * avgPhotoSize;
 
-      // Create PDF
       const doc = new jsPDF();
-      
-      // Title
+
       doc.setFontSize(20);
       doc.text("Event Report", 20, 20);
-      
-      // Event Details
+
       doc.setFontSize(12);
       doc.text(`Event: ${event.display_name || event.name || event.event_id}`, 20, 40);
       doc.text(`Event ID: ${event.event_id}`, 20, 50);
       if (event.date) {
         doc.text(`Date: ${new Date(event.date).toLocaleDateString()}`, 20, 60);
       }
-      
-      // Statistics
+
       doc.setFontSize(14);
       doc.text("Statistics", 20, 80);
       doc.setFontSize(12);
       doc.text(`Total Photos/Videos: ${event.photoCount || 0}`, 20, 95);
       doc.text(`Storage Used: ${totalStorageMB.toFixed(1)} MB`, 20, 105);
-      
-      // Device breakdown
+
       if (photos && photos.length > 0) {
         let iosCount = 0;
         let androidCount = 0;
-        
+
         photos.forEach(photo => {
           if (photo.device_info) {
             const deviceLower = photo.device_info.toLowerCase();
@@ -215,15 +191,14 @@ export default function EventFiles() {
         doc.text(`Android: ${androidCount} (${Math.round((androidCount / photos.length) * 100)}%)`, 30, 140);
       }
 
-      // Upload Timeline
       if (photos && photos.length > 0) {
         doc.text("Upload Activity:", 20, 160);
-        const sortedPhotos = photos.sort((a, b) => 
+        const sortedPhotos = photos.sort((a, b) =>
           new Date(a.uploaded_at).getTime() - new Date(b.uploaded_at).getTime()
         );
         const firstUpload = sortedPhotos[0]?.uploaded_at;
         const lastUpload = sortedPhotos[sortedPhotos.length - 1]?.uploaded_at;
-        
+
         if (firstUpload) {
           doc.text(`First Upload: ${new Date(firstUpload).toLocaleString()}`, 30, 170);
         }
@@ -232,11 +207,9 @@ export default function EventFiles() {
         }
       }
 
-      // Footer
       doc.setFontSize(10);
       doc.text(`Generated on ${new Date().toLocaleString()}`, 20, 280);
 
-      // Save PDF
       doc.save(`${event.event_id}_report.pdf`);
 
       toast({
@@ -258,14 +231,12 @@ export default function EventFiles() {
 
   const deleteEvent = async (eventId: string) => {
     try {
-      // Delete all photos from storage
       const { data: photos } = await supabase
         .from('event_photos')
         .select('id')
         .eq('event_id', eventId);
 
       if (photos && photos.length > 0) {
-        // Delete photos from database
         const { error: photosError } = await supabase
           .from('event_photos')
           .delete()
@@ -274,7 +245,6 @@ export default function EventFiles() {
         if (photosError) throw photosError;
       }
 
-      // Delete event from database
       const { error: eventError } = await supabase
         .from('Events')
         .delete()
@@ -282,7 +252,6 @@ export default function EventFiles() {
 
       if (eventError) throw eventError;
 
-      // Update local state
       setEvents(prev => prev.filter(e => e.event_id !== eventId));
 
       toast({
@@ -302,29 +271,6 @@ export default function EventFiles() {
     }
   };
 
-  const toggleEventStatus = async (event: Event) => {
-    const newStatus = event.status === 'active' ? 'closed' : 'active';
-    // Optimistic update
-    setEvents(prev => prev.map(e => e.event_id === event.event_id ? { ...e, status: newStatus } : e));
-
-    const { error } = await supabase
-      .from('Events')
-      .update({ status: newStatus })
-      .eq('event_id', event.event_id);
-
-    if (error) {
-      // Revert
-      setEvents(prev => prev.map(e => e.event_id === event.event_id ? { ...e, status: event.status } : e));
-      toast({
-        title: "Error",
-        description: "Failed to update event status",
-        variant: "destructive",
-      });
-    }
-  };
-
-
-
   if (loading) {
     return <div className="p-6">Loading events...</div>;
   }
@@ -332,29 +278,12 @@ export default function EventFiles() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Event Files & Management</h1>
+        <h1 className="text-3xl font-bold">Event Files — Ready for Download</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Search Events</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by event ID or name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Events ({filteredEvents.length})</CardTitle>
+          <CardTitle>Closed Events ({events.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -363,22 +292,21 @@ export default function EventFiles() {
                 <TableHead>Event</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Photos</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="w-[260px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEvents.length === 0 ? (
+              {events.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={4} className="text-center py-8">
                     <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">
-                      {searchTerm ? "No events match your search" : "No events found"}
+                      No closed events yet. Close an event from Event Management to make its files available here.
                     </p>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEvents.map((event) => (
+                events.map((event) => (
                   <TableRow key={event.event_id}>
                     <TableCell>
                       <div>
@@ -390,19 +318,6 @@ export default function EventFiles() {
                       {event.date ? new Date(event.date).toLocaleDateString() : "Date Not Set"}
                     </TableCell>
                     <TableCell>{event.photoCount} photos</TableCell>
-                    <TableCell>
-                      <button
-                        type="button"
-                        onClick={() => toggleEventStatus(event)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                          event.status === 'active'
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                      >
-                        {event.status === 'active' ? 'Active' : 'Closed'}
-                      </button>
-                    </TableCell>
                     <TableCell className="w-[260px]">
                       <div className="flex justify-end gap-8">
                         <Button
@@ -445,7 +360,7 @@ export default function EventFiles() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Event?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the event "{deleteEventId}" and all associated photos. 
+              This will permanently delete the event "{deleteEventId}" and all associated photos.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

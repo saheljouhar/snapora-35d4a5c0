@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -13,35 +14,32 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
+import { Pencil, XCircle } from "lucide-react";
 
 interface EventRow {
   event_id: string;
   display_name: string | null;
   name: string | null;
   date: string | null;
+  description: string | null;
   status: string | null;
   photoCount: number;
 }
 
 const formatDateDMY = (d: string | null) => {
-  if (!d) return "—";
+  if (!d) return "Date not set";
   const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "—";
+  if (Number.isNaN(dt.getTime())) return "Date not set";
   const dd = String(dt.getDate()).padStart(2, "0");
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
   const yyyy = dt.getFullYear();
@@ -51,12 +49,14 @@ const formatDateDMY = (d: string | null) => {
 export default function EventsManagement() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<EventRow | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editDisplayName, setEditDisplayName] = useState("");
   const [editDate, setEditDate] = useState("");
-  const [editStatus, setEditStatus] = useState<"active" | "closed">("active");
+  const [editDescription, setEditDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirmCloseEvent, setConfirmCloseEvent] = useState<EventRow | null>(null);
+  const [closing, setClosing] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -82,13 +82,13 @@ export default function EventsManagement() {
           display_name: e.display_name,
           name: e.name,
           date: e.date,
+          description: e.description ?? null,
           status: e.status,
           photoCount: count || 0,
         };
       })
     );
 
-    // Sort: most recent date first, nulls at bottom
     withCounts.sort((a, b) => {
       if (!a.date && !b.date) return 0;
       if (!a.date) return 1;
@@ -101,20 +101,20 @@ export default function EventsManagement() {
   };
 
   const openEdit = (event: EventRow) => {
-    setEditing(event);
+    setEditingId(event.event_id);
     setEditDisplayName(event.display_name || event.name || "");
     setEditDate(event.date || "");
-    setEditStatus(event.status === "closed" ? "closed" : "active");
+    setEditDescription(event.description || "");
     setSaveError(null);
   };
 
   const closeEdit = () => {
-    setEditing(null);
+    setEditingId(null);
     setSaveError(null);
   };
 
   const saveEdit = async () => {
-    if (!editing) return;
+    if (!editingId) return;
     setSaving(true);
     setSaveError(null);
 
@@ -123,9 +123,9 @@ export default function EventsManagement() {
       .update({
         display_name: editDisplayName,
         date: editDate || null,
-        status: editStatus,
+        description: editDescription || null,
       })
-      .eq("event_id", editing.event_id);
+      .eq("event_id", editingId);
 
     setSaving(false);
 
@@ -134,20 +134,43 @@ export default function EventsManagement() {
       return;
     }
 
-    toast.success("Event updated successfully.");
+    toast.success("Event updated.");
     setEvents((prev) =>
       prev.map((e) =>
-        e.event_id === editing.event_id
+        e.event_id === editingId
           ? {
               ...e,
               display_name: editDisplayName,
               date: editDate || null,
-              status: editStatus,
+              description: editDescription || null,
             }
           : e
       )
     );
     closeEdit();
+  };
+
+  const handleCloseEvent = async () => {
+    if (!confirmCloseEvent) return;
+    setClosing(true);
+    const { error } = await supabase
+      .from("Events")
+      .update({ status: "closed" })
+      .eq("event_id", confirmCloseEvent.event_id);
+    setClosing(false);
+
+    if (error) {
+      toast.error(`Failed to close event: ${error.message}`);
+      return;
+    }
+
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.event_id === confirmCloseEvent.event_id ? { ...e, status: "closed" } : e
+      )
+    );
+    toast.success("Event closed. Files are now available for download in Event Files.");
+    setConfirmCloseEvent(null);
   };
 
   if (loading) {
@@ -156,7 +179,7 @@ export default function EventsManagement() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold">Events</h1>
+      <h1 className="text-3xl font-bold">Event Management</h1>
 
       <Card>
         <CardHeader>
@@ -181,100 +204,145 @@ export default function EventsManagement() {
                   </TableCell>
                 </TableRow>
               ) : (
-                events.map((event) => (
-                  <TableRow key={event.event_id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">
-                          {event.display_name || event.name || event.event_id}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{event.event_id}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatDateDMY(event.date)}</TableCell>
-                    <TableCell>{event.photoCount}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          event.status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-200 text-gray-700"
-                        }`}
-                      >
-                        {event.status === "active" ? "Active" : "Closed"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(event)}>
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                events.map((event) => {
+                  const isClosed = event.status === "closed";
+                  const isEditing = editingId === event.event_id;
+                  return (
+                    <Fragment key={event.event_id}>
+                      <TableRow>
+                        <TableCell>
+                          <div>
+                            <p className="font-bold">
+                              {event.display_name || event.name || event.event_id}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{event.event_id}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatDateDMY(event.date)}</TableCell>
+                        <TableCell>{event.photoCount}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              !isClosed
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {!isClosed ? "Active" : "Closed"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => (isEditing ? closeEdit() : openEdit(event))}
+                            >
+                              <Pencil className="w-4 h-4 mr-2" />
+                              {isEditing ? "Close" : "Edit"}
+                            </Button>
+                            {isClosed ? (
+                              <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed">
+                                Event Closed
+                              </span>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => setConfirmCloseEvent(event)}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Close Event
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+
+                      {isEditing && (
+                        <TableRow className="bg-muted/40">
+                          <TableCell colSpan={5}>
+                            <div className="p-4 space-y-4">
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`name-${event.event_id}`}>Display name</Label>
+                                  <Input
+                                    id={`name-${event.event_id}`}
+                                    value={editDisplayName}
+                                    onChange={(e) => setEditDisplayName(e.target.value)}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`date-${event.event_id}`}>Event date</Label>
+                                  <Input
+                                    id={`date-${event.event_id}`}
+                                    type="date"
+                                    value={editDate || ""}
+                                    onChange={(e) => setEditDate(e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`desc-${event.event_id}`}>Description</Label>
+                                <Textarea
+                                  id={`desc-${event.event_id}`}
+                                  value={editDescription}
+                                  onChange={(e) => setEditDescription(e.target.value)}
+                                />
+                              </div>
+                              {saveError && (
+                                <p className="text-red-600 text-sm font-medium">{saveError}</p>
+                              )}
+                              <div className="flex justify-end gap-2">
+                                <Button variant="outline" onClick={closeEdit} disabled={saving}>
+                                  Cancel
+                                </Button>
+                                <Button onClick={saveEdit} disabled={saving}>
+                                  {saving ? "Saving..." : "Save Changes"}
+                                </Button>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Fragment>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      <Dialog open={!!editing} onOpenChange={(o) => !o && closeEdit()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Event</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-display-name">Display name</Label>
-              <Input
-                id="edit-display-name"
-                value={editDisplayName}
-                onChange={(e) => setEditDisplayName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-date">Event date</Label>
-              <Input
-                id="edit-date"
-                type="date"
-                value={editDate || ""}
-                onChange={(e) => setEditDate(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-status">Status</Label>
-              <Select
-                value={editStatus}
-                onValueChange={(v) => setEditStatus(v as "active" | "closed")}
-              >
-                <SelectTrigger id="edit-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {saveError && (
-              <p className="text-red-600 text-sm font-medium">{saveError}</p>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={closeEdit} disabled={saving}>
-              Cancel
-            </Button>
-            <Button onClick={saveEdit} disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AlertDialog
+        open={!!confirmCloseEvent}
+        onOpenChange={(o) => !o && !closing && setConfirmCloseEvent(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Close this event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to close{" "}
+              <span className="font-semibold">
+                {confirmCloseEvent?.display_name ||
+                  confirmCloseEvent?.name ||
+                  confirmCloseEvent?.event_id}
+              </span>
+              ? Guests will no longer be able to upload photos. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={closing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCloseEvent}
+              disabled={closing}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {closing ? "Closing..." : "Yes, Close Event"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
