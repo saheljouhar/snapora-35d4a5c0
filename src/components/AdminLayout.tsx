@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogOut, BarChart3, Plus, FolderOpen, Users } from "lucide-react";
+import { ArrowLeft, LogOut, BarChart3, Plus, FolderOpen, Users, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
@@ -45,6 +45,7 @@ export default function AdminLayout() {
   const navigationItems = [
     { path: "/admin", label: "Dashboard", icon: BarChart3 },
     { path: "/admin/events/create", label: "Create Event", icon: Plus },
+    { path: "/admin/events", label: "Events", icon: Calendar },
     { path: "/admin/events/files", label: "Event Files", icon: FolderOpen },
     { path: "/admin/bookings", label: "Bookings", icon: Users },
   ];

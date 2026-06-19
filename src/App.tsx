@@ -10,6 +10,7 @@ import AdminLayout from "./components/AdminLayout";
 import AdminDashboard from "./pages/AdminDashboard";
 import EventCreation from "./pages/EventCreation";
 import EventFiles from "./pages/EventFiles";
+import EventsManagement from "./pages/EventsManagement";
 import BookingManagement from "./pages/BookingManagement";
 import Booking from "./pages/Booking";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="events/create" element={<EventCreation />} />
+            <Route path="events" element={<EventsManagement />} />
             <Route path="events/files" element={<EventFiles />} />
             <Route path="bookings" element={<BookingManagement />} />
           </Route>
