@@ -45,7 +45,7 @@ export default function AdminLayout() {
   const navigationItems = [
     { path: "/admin", label: "Dashboard", icon: BarChart3 },
     { path: "/admin/events/create", label: "Create Event", icon: Plus },
-    { path: "/admin/events", label: "Events", icon: Calendar },
+    { path: "/admin/events", label: "Event Management", icon: Calendar },
     { path: "/admin/events/files", label: "Event Files", icon: FolderOpen },
     { path: "/admin/bookings", label: "Bookings", icon: Users },
   ];
