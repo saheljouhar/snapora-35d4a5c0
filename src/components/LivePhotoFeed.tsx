@@ -214,12 +214,15 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
           <div className="relative">
             <div
               className="
-                grid md:gap-4 md:overflow-x-auto md:pb-4 md:snap-x md:snap-mandatory
-                grid-cols-2 gap-2
-                md:grid-cols-none
+                grid grid-cols-2 gap-2
+                md:grid-cols-none md:gap-4 md:overflow-x-auto md:pb-4 md:snap-x md:snap-mandatory
+                md:[grid-template-rows:repeat(2,minmax(180px,280px))]
+                md:[grid-auto-flow:column]
+                md:[grid-auto-columns:minmax(180px,280px)]
               "
               style={{
-                gridAutoFlow: undefined,
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#ec4899 #fce7f3',
               }}
             >
               {photos.map((photo, index) => (
