@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Pencil, XCircle } from "lucide-react";
+import { Pencil, XCircle, Trash2, Search } from "lucide-react";
 
 interface EventRow {
   event_id: string;
@@ -57,6 +57,10 @@ export default function EventsManagement() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmCloseEvent, setConfirmCloseEvent] = useState<EventRow | null>(null);
   const [closing, setClosing] = useState(false);
+  const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<EventRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchEvents();
@@ -173,6 +177,36 @@ export default function EventsManagement() {
     setConfirmCloseEvent(null);
   };
 
+  const handleDeleteEvent = async () => {
+    if (!confirmDeleteEvent) return;
+    setDeleting(true);
+    setDeleteError(null);
+    const { error } = await supabase
+      .from("Events")
+      .delete()
+      .eq("event_id", confirmDeleteEvent.event_id);
+    setDeleting(false);
+
+    if (error) {
+      setDeleteError(error.message);
+      return;
+    }
+
+    setEvents((prev) => prev.filter((e) => e.event_id !== confirmDeleteEvent.event_id));
+    toast.success("Event deleted successfully.");
+    setConfirmDeleteEvent(null);
+  };
+
+  const filteredEvents = events.filter((e) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (e.display_name || "").toLowerCase().includes(q) ||
+      (e.name || "").toLowerCase().includes(q) ||
+      (e.event_id || "").toLowerCase().includes(q)
+    );
+  });
+
   if (loading) {
     return <div className="p-6">Loading events...</div>;
   }
@@ -183,9 +217,18 @@ export default function EventsManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Events ({events.length})</CardTitle>
+          <CardTitle>All Events ({filteredEvents.length})</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by event name or ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -197,14 +240,14 @@ export default function EventsManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {events.length === 0 ? (
+              {filteredEvents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No events found
                   </TableCell>
                 </TableRow>
               ) : (
-                events.map((event) => {
+                filteredEvents.map((event) => {
                   const isClosed = event.status === "closed";
                   const isEditing = editingId === event.event_id;
                   return (
@@ -242,9 +285,22 @@ export default function EventsManagement() {
                               {isEditing ? "Close" : "Edit"}
                             </Button>
                             {isClosed ? (
-                              <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed">
-                                Event Closed
-                              </span>
+                              <>
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed">
+                                  Event Closed
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setDeleteError(null);
+                                    setConfirmDeleteEvent(event);
+                                  }}
+                                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
                             ) : (
                               <Button
                                 size="sm"
@@ -339,6 +395,39 @@ export default function EventsManagement() {
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               {closing ? "Closing..." : "Yes, Close Event"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!confirmDeleteEvent}
+        onOpenChange={(o) => !o && !deleting && setConfirmDeleteEvent(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete{" "}
+              <span className="font-semibold">
+                {confirmDeleteEvent?.display_name ||
+                  confirmDeleteEvent?.name ||
+                  confirmDeleteEvent?.event_id}
+              </span>
+              ? This will delete the event record. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && (
+            <p className="text-red-600 text-sm font-medium">{deleteError}</p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEvent}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleting ? "Deleting..." : "Yes, Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
