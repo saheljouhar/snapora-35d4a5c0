@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Pencil, XCircle } from "lucide-react";
+import { Pencil, XCircle, Trash2, Search } from "lucide-react";
 
 interface EventRow {
   event_id: string;
@@ -57,6 +57,10 @@ export default function EventsManagement() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmCloseEvent, setConfirmCloseEvent] = useState<EventRow | null>(null);
   const [closing, setClosing] = useState(false);
+  const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<EventRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchEvents();
@@ -172,6 +176,36 @@ export default function EventsManagement() {
     toast.success("Event closed. Files are now available for download in Event Files.");
     setConfirmCloseEvent(null);
   };
+
+  const handleDeleteEvent = async () => {
+    if (!confirmDeleteEvent) return;
+    setDeleting(true);
+    setDeleteError(null);
+    const { error } = await supabase
+      .from("Events")
+      .delete()
+      .eq("event_id", confirmDeleteEvent.event_id);
+    setDeleting(false);
+
+    if (error) {
+      setDeleteError(error.message);
+      return;
+    }
+
+    setEvents((prev) => prev.filter((e) => e.event_id !== confirmDeleteEvent.event_id));
+    toast.success("Event deleted successfully.");
+    setConfirmDeleteEvent(null);
+  };
+
+  const filteredEvents = events.filter((e) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (e.display_name || "").toLowerCase().includes(q) ||
+      (e.name || "").toLowerCase().includes(q) ||
+      (e.event_id || "").toLowerCase().includes(q)
+    );
+  });
 
   if (loading) {
     return <div className="p-6">Loading events...</div>;
