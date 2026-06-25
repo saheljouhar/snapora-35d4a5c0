@@ -210,36 +210,38 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
             <p className="text-gray-600">Live feed from guests • {photos.length} photos shared</p>
           </div>
           
-          {/* Fixed 2x3 grid with horizontal scroll */}
+          {/* Mobile: strict 2-col square grid. Desktop: 2-row horizontal scroll */}
           <div className="relative">
-            <div 
-              className="grid gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory"
-              style={{ 
-                gridTemplateRows: 'repeat(2, minmax(180px, 280px))',
-                gridAutoFlow: 'column',
-                gridAutoColumns: 'minmax(180px, 280px)',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#ec4899 #fce7f3'
+            <div
+              className="
+                grid md:gap-4 md:overflow-x-auto md:pb-4 md:snap-x md:snap-mandatory
+                grid-cols-2 gap-2
+                md:grid-cols-none
+              "
+              style={{
+                gridAutoFlow: undefined,
               }}
             >
               {photos.map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="snap-start group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in"
+                  className="md:snap-start group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in md:[grid-row:auto]"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div 
-                    className="aspect-square cursor-pointer"
+                  <div
+                    className="cursor-pointer w-full"
+                    style={{ aspectRatio: '1 / 1' }}
                     onClick={() => setSelectedPhoto(photo)}
                   >
                     <img
                       src={photo.thumbnail_url || photo.photo_url}
                       alt={`Event photo ${index + 1}`}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      style={{ objectFit: 'cover' }}
                       loading="lazy"
                     />
                   </div>
-                  
+
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -259,8 +261,8 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
                     }}
                     className="absolute top-3 right-3 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 group/like z-10"
                   >
-                    <Heart 
-                      className="w-5 h-5 text-pink-500 transition-all duration-200 group-hover/like:fill-pink-500" 
+                    <Heart
+                      className="w-5 h-5 text-pink-500 transition-all duration-200 group-hover/like:fill-pink-500"
                       fill={likedPhotos.has(photo.id) ? "currentColor" : "none"}
                     />
                   </button>
@@ -278,8 +280,8 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
             </div>
           </div>
 
-          {/* Mobile: Show grid info */}
-          <div className="text-center mt-4 text-sm text-gray-500">
+          {/* Desktop scroll hint only */}
+          <div className="hidden md:block text-center mt-4 text-sm text-gray-500">
             <p>← Scroll to see more photos →</p>
           </div>
         </div>
