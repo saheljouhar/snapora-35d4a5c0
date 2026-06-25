@@ -42,24 +42,33 @@ export default function EventCreation() {
     if (!file) return;
 
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    const fileType = file.type?.toLowerCase() || '';
+    const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+    const fileType = (file.type || '').toLowerCase();
 
-    // Mobile cameras often provide blobs with missing or generic names/types
     const rawName = file.name || '';
-    const hasValidName = rawName && rawName !== 'blob' && /\.[a-zA-Z0-9]+$/.test(rawName);
+    const extMatch = rawName.match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? extMatch[1].toLowerCase() : '';
+    const hasValidExt = allowedExts.includes(ext);
     const hasValidType = allowedTypes.includes(fileType);
+    const hasValidName =
+      !!rawName && rawName.toLowerCase() !== 'blob' && hasValidExt;
 
-    if (!hasValidType && !hasValidName) {
+    // Accept JPEG/JPG by extension even if MIME is inconsistent (some Android phones)
+    if (!hasValidType && !hasValidExt) {
       toast({
         title: "Unsupported file",
-        description: "Only JPG, PNG, or WEBP photos are allowed.",
+        description: "Only JPG, JPEG, PNG, or WEBP photos are allowed.",
         variant: "destructive",
       });
       return;
     }
 
+    // Wrap blobs from mobile cameras (no name / generic name / missing type) in a safe File
     if (!hasValidName || !hasValidType) {
-      file = new File([file], `poster_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const safeFile = new File([file], `poster_${Date.now()}.jpg`, {
+        type: 'image/jpeg',
+      });
+      file = safeFile;
     }
 
     setPosterFile(file);
