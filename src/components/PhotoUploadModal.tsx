@@ -87,14 +87,18 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    // Validate file types
-    const invalidType = Array.from(files).find(
-      (f) => !ALLOWED_IMAGE_TYPES.includes(f.type.toLowerCase())
-    );
+    // Validate file types — accept by MIME OR by extension (Android JPEG quirks)
+    const invalidType = Array.from(files).find((f) => {
+      const type = (f.type || '').toLowerCase();
+      const name = (f.name || '').toLowerCase();
+      const extMatch = name.match(/\.([a-z0-9]+)$/);
+      const ext = extMatch ? extMatch[1] : '';
+      return !ALLOWED_IMAGE_TYPES.includes(type) && !ALLOWED_EXTS.includes(ext);
+    });
     if (invalidType) {
       toast({
         title: "Unsupported file",
-        description: "Only JPG, PNG, or WEBP photos are allowed.",
+        description: "Only JPG, JPEG, PNG, or WEBP photos are allowed.",
         variant: "destructive",
       });
       return;
