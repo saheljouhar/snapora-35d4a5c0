@@ -217,9 +217,18 @@ export default function EventsManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Events ({events.length})</CardTitle>
+          <CardTitle>All Events ({filteredEvents.length})</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by event name or ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -231,14 +240,14 @@ export default function EventsManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {events.length === 0 ? (
+              {filteredEvents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No events found
                   </TableCell>
                 </TableRow>
               ) : (
-                events.map((event) => {
+                filteredEvents.map((event) => {
                   const isClosed = event.status === "closed";
                   const isEditing = editingId === event.event_id;
                   return (
@@ -276,9 +285,22 @@ export default function EventsManagement() {
                               {isEditing ? "Close" : "Edit"}
                             </Button>
                             {isClosed ? (
-                              <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed">
-                                Event Closed
-                              </span>
+                              <>
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed">
+                                  Event Closed
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setDeleteError(null);
+                                    setConfirmDeleteEvent(event);
+                                  }}
+                                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
                             ) : (
                               <Button
                                 size="sm"
