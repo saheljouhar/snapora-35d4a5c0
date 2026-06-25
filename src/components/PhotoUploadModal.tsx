@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, Upload, X, Image as ImageIcon, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const SUPABASE_URL = 'https://dydzqautscblrrcvlreh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5ZHpxYXV0c2NibHJyY3ZscmVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NTUyMTEsImV4cCI6MjA3MDMzMTIxMX0.ammrjtunik84JOH9pWwy9G0pOfU1aRLyp0SEHpvHZPc';
@@ -65,21 +66,39 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   const [uploaded, setUploaded] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    setCurrentSlide(carouselApi.selectedScrollSnap());
+    const onSelect = () => setCurrentSlide(carouselApi.selectedScrollSnap());
+    carouselApi.on('select', onSelect);
+    carouselApi.on('reInit', onSelect);
+    return () => {
+      carouselApi.off('select', onSelect);
+      carouselApi.off('reInit', onSelect);
+    };
+  }, [carouselApi]);
 
   if (!isOpen) return null;
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    // Validate file types
-    const invalidType = Array.from(files).find(
-      (f) => !ALLOWED_IMAGE_TYPES.includes(f.type.toLowerCase())
-    );
+    // Validate file types — accept by MIME OR by extension (Android JPEG quirks)
+    const invalidType = Array.from(files).find((f) => {
+      const type = (f.type || '').toLowerCase();
+      const name = (f.name || '').toLowerCase();
+      const extMatch = name.match(/\.([a-z0-9]+)$/);
+      const ext = extMatch ? extMatch[1] : '';
+      return !ALLOWED_IMAGE_TYPES.includes(type) && !ALLOWED_EXTS.includes(ext);
+    });
     if (invalidType) {
       toast({
         title: "Unsupported file",
-        description: "Only JPG, PNG, or WEBP photos are allowed.",
+        description: "Only JPG, JPEG, PNG, or WEBP photos are allowed.",
         variant: "destructive",
       });
       return;
@@ -275,7 +294,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                 
                 {/* Image Carousel */}
                 <div className="relative">
-                  <Carousel className="w-full">
+                  <Carousel className="w-full" setApi={setCarouselApi} opts={{ loop: false }}>
                     <CarouselContent>
                       {previewImages.map((imageUrl, index) => (
                         <CarouselItem key={index}>
@@ -284,6 +303,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                               src={imageUrl}
                               alt={`Preview ${index + 1}`}
                               className="w-full h-64 object-cover"
+                              draggable={false}
                             />
                           </div>
                         </CarouselItem>
@@ -298,8 +318,8 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                   </Carousel>
                   
                   {previewImages.length > 1 && (
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-                      1 / {previewImages.length}
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm pointer-events-none">
+                      {currentSlide + 1} / {previewImages.length}
                     </div>
                   )}
                 </div>
