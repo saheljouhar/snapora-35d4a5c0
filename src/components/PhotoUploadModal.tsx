@@ -294,7 +294,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                 
                 {/* Image Carousel */}
                 <div className="relative">
-                  <Carousel className="w-full">
+                  <Carousel className="w-full" setApi={setCarouselApi} opts={{ loop: false }}>
                     <CarouselContent>
                       {previewImages.map((imageUrl, index) => (
                         <CarouselItem key={index}>
@@ -303,6 +303,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                               src={imageUrl}
                               alt={`Preview ${index + 1}`}
                               className="w-full h-64 object-cover"
+                              draggable={false}
                             />
                           </div>
                         </CarouselItem>
@@ -317,8 +318,8 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                   </Carousel>
                   
                   {previewImages.length > 1 && (
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-                      1 / {previewImages.length}
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm pointer-events-none">
+                      {currentSlide + 1} / {previewImages.length}
                     </div>
                   )}
                 </div>
