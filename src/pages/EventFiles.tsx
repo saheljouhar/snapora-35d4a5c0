@@ -277,6 +277,16 @@ export default function EventFiles() {
     return <div className="p-6">Loading events...</div>;
   }
 
+  const filteredEvents = events.filter((e) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (e.display_name || "").toLowerCase().includes(q) ||
+      (e.name || "").toLowerCase().includes(q) ||
+      (e.event_id || "").toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
