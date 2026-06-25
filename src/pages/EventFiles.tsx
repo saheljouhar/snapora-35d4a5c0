@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Download, FolderOpen, FileText, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Download, FolderOpen, FileText, Trash2, Search } from "lucide-react";
 import JSZip from "jszip";
 import { jsPDF } from "jspdf";
 import {
@@ -34,6 +35,7 @@ export default function EventFiles() {
   const [downloadingEvent, setDownloadingEvent] = useState<string | null>(null);
   const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -283,9 +285,18 @@ export default function EventFiles() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Closed Events ({events.length})</CardTitle>
+          <CardTitle>Closed Events ({filteredEvents.length})</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by event name or ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -296,17 +307,19 @@ export default function EventFiles() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {events.length === 0 ? (
+              {filteredEvents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
                     <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">
-                      No closed events yet. Close an event from Event Management to make its files available here.
+                      {events.length === 0
+                        ? "No closed events yet. Close an event from Event Management to make its files available here."
+                        : "No events match your search."}
                     </p>
                   </TableCell>
                 </TableRow>
               ) : (
-                events.map((event) => (
+                filteredEvents.map((event) => (
                   <TableRow key={event.event_id}>
                     <TableCell>
                       <div>
