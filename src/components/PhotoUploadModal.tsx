@@ -89,7 +89,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    // Validate file types — accept by MIME OR by extension (Android JPEG quirks)
+    // Validate file types — accept by MIME OR by extension
     const invalidType = Array.from(files).find((f) => {
       const type = (f.type || '').toLowerCase();
       const name = (f.name || '').toLowerCase();
@@ -100,7 +100,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     if (invalidType) {
       toast({
         title: "Unsupported file",
-        description: "Only JPG, JPEG, PNG, or WEBP photos are allowed.",
+        description: "Only JPG, JPEG, PNG, WEBP, HEIC, or HEIF photos are allowed.",
         variant: "destructive",
       });
       return;
@@ -117,10 +117,50 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       return;
     }
 
-    setSelectedFiles(files);
-    const previewUrls = Array.from(files).map((f) => URL.createObjectURL(f));
+    // Detect and convert HEIC/HEIF files
+    const fileArray = Array.from(files);
+    const hasHeic = fileArray.some((f) => {
+      const name = (f.name || '').toLowerCase();
+      const type = (f.type || '').toLowerCase();
+      return type === 'image/heic' || type === 'image/heif' ||
+        name.endsWith('.heic') || name.endsWith('.heif');
+    });
+
+    let processed: File[] = fileArray;
+    if (hasHeic) {
+      setConverting(true);
+      try {
+        processed = await Promise.all(
+          fileArray.map(async (file) => {
+            const name = (file.name || '').toLowerCase();
+            const type = (file.type || '').toLowerCase();
+            const isHeic = type === 'image/heic' || type === 'image/heif' ||
+              name.endsWith('.heic') || name.endsWith('.heif');
+            if (!isHeic) return file;
+            const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 1 });
+            const blob = Array.isArray(result) ? result[0] : result;
+            const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg') || `photo_${Date.now()}.jpg`;
+            return new File([blob], newName, { type: 'image/jpeg' });
+          })
+        );
+      } catch (err: any) {
+        console.error('HEIC conversion failed:', err);
+        setConverting(false);
+        toast({
+          title: "Conversion failed",
+          description: "Could not convert HEIC photo. Please try a different photo.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setConverting(false);
+    }
+
+    setSelectedFiles(processed);
+    const previewUrls = processed.map((f) => URL.createObjectURL(f));
     setPreviewImages(previewUrls);
   };
+
 
   const handleConfirmUpload = async () => {
     if (!selectedFiles || !eventId) {
