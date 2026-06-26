@@ -62,6 +62,7 @@ export default function EventsManagement() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [qrEvent, setQrEvent] = useState<EventRow | null>(null);
 
   useEffect(() => {
     fetchEvents();
