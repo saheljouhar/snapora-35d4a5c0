@@ -286,6 +286,27 @@ export default function EventsManagement() {
                               <Pencil className="w-4 h-4 mr-2" />
                               {isEditing ? "Close" : "Edit"}
                             </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setQrEvent(event)}
+                            >
+                              <QrCode className="w-4 h-4 mr-2" />
+                              QR Code
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() =>
+                                window.open(
+                                  `https://snapora.lovable.app/?event=${event.event_id}`,
+                                  "_blank",
+                                  "noopener,noreferrer"
+                                )
+                              }
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Preview
                             {isClosed ? (
                               <>
                                 <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed">
