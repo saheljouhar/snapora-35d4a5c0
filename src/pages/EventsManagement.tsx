@@ -24,7 +24,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Pencil, XCircle, Trash2, Search } from "lucide-react";
+import { Pencil, XCircle, Trash2, Search, QrCode, ExternalLink } from "lucide-react";
+import EventQRModal from "@/components/EventQRModal";
 
 interface EventRow {
   event_id: string;
@@ -61,6 +62,7 @@ export default function EventsManagement() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [qrEvent, setQrEvent] = useState<EventRow | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -284,6 +286,28 @@ export default function EventsManagement() {
                               <Pencil className="w-4 h-4 mr-2" />
                               {isEditing ? "Close" : "Edit"}
                             </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setQrEvent(event)}
+                            >
+                              <QrCode className="w-4 h-4 mr-2" />
+                              QR Code
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() =>
+                                window.open(
+                                  `https://snapora.lovable.app/?event=${event.event_id}`,
+                                  "_blank",
+                                  "noopener,noreferrer"
+                                )
+                              }
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Preview
+                            </Button>
                             {isClosed ? (
                               <>
                                 <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed">
@@ -432,6 +456,15 @@ export default function EventsManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {qrEvent && (
+        <EventQRModal
+          open={!!qrEvent}
+          onClose={() => setQrEvent(null)}
+          eventId={qrEvent.event_id}
+          displayName={qrEvent.display_name || qrEvent.name || qrEvent.event_id}
+        />
+      )}
     </div>
   );
 }

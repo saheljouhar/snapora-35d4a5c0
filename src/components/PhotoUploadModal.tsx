@@ -6,9 +6,10 @@ import { Progress } from '@/components/ui/progress';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import heic2any from 'heic2any';
 
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp'];
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const SUPABASE_URL = 'https://dydzqautscblrrcvlreh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5ZHpxYXV0c2NibHJyY3ZscmVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NTUyMTEsImV4cCI6MjA3MDMzMTIxMX0.ammrjtunik84JOH9pWwy9G0pOfU1aRLyp0SEHpvHZPc';
@@ -65,9 +66,10 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploaded, setUploaded] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[] | null>(null);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [converting, setConverting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -82,12 +84,24 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     };
   }, [carouselApi]);
 
+  // Re-init carousel and reset to first slide whenever the preview set changes,
+  // so the first slide always renders correctly.
+  useEffect(() => {
+    if (!carouselApi || previewImages.length === 0) return;
+    const id = requestAnimationFrame(() => {
+      carouselApi.reInit();
+      carouselApi.scrollTo(0, true);
+      setCurrentSlide(0);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [carouselApi, previewImages]);
+
   if (!isOpen) return null;
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    // Validate file types — accept by MIME OR by extension (Android JPEG quirks)
+    // Validate file types — accept by MIME OR by extension
     const invalidType = Array.from(files).find((f) => {
       const type = (f.type || '').toLowerCase();
       const name = (f.name || '').toLowerCase();
@@ -98,7 +112,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     if (invalidType) {
       toast({
         title: "Unsupported file",
-        description: "Only JPG, JPEG, PNG, or WEBP photos are allowed.",
+        description: "Only JPG, JPEG, PNG, WEBP, HEIC, or HEIF photos are allowed.",
         variant: "destructive",
       });
       return;
@@ -115,10 +129,50 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       return;
     }
 
-    setSelectedFiles(files);
-    const previewUrls = Array.from(files).map((f) => URL.createObjectURL(f));
+    // Detect and convert HEIC/HEIF files
+    const fileArray = Array.from(files);
+    const hasHeic = fileArray.some((f) => {
+      const name = (f.name || '').toLowerCase();
+      const type = (f.type || '').toLowerCase();
+      return type === 'image/heic' || type === 'image/heif' ||
+        name.endsWith('.heic') || name.endsWith('.heif');
+    });
+
+    let processed: File[] = fileArray;
+    if (hasHeic) {
+      setConverting(true);
+      try {
+        processed = await Promise.all(
+          fileArray.map(async (file) => {
+            const name = (file.name || '').toLowerCase();
+            const type = (file.type || '').toLowerCase();
+            const isHeic = type === 'image/heic' || type === 'image/heif' ||
+              name.endsWith('.heic') || name.endsWith('.heif');
+            if (!isHeic) return file;
+            const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 1 });
+            const blob = Array.isArray(result) ? result[0] : result;
+            const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg') || `photo_${Date.now()}.jpg`;
+            return new File([blob], newName, { type: 'image/jpeg' });
+          })
+        );
+      } catch (err: any) {
+        console.error('HEIC conversion failed:', err);
+        setConverting(false);
+        toast({
+          title: "Conversion failed",
+          description: "Could not convert HEIC photo. Please try a different photo.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setConverting(false);
+    }
+
+    setSelectedFiles(processed);
+    const previewUrls = processed.map((f) => URL.createObjectURL(f));
     setPreviewImages(previewUrls);
   };
+
 
   const handleConfirmUpload = async () => {
     if (!selectedFiles || !eventId) {
@@ -133,7 +187,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     setUploading(true);
     setUploadProgress(0);
 
-    const files = Array.from(selectedFiles);
+    const files = selectedFiles;
     const totalFiles = files.length;
 
     try {
@@ -222,7 +276,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   const handleCameraAccess = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
+    input.accept = 'image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.heic,.heif';
     input.capture = 'environment';
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
@@ -234,7 +288,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   const handleGalleryAccess = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
+    input.accept = 'image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.heic,.heif';
     input.multiple = true;
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
@@ -271,7 +325,12 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
 
           {/* Content */}
           <div className="p-6">
-            {uploading ? (
+            {converting ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+                <p className="text-gray-600">Converting photo format...</p>
+              </div>
+            ) : uploading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
                 <p className="text-gray-600 mb-4">Uploading your photos...</p>
@@ -297,13 +356,14 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                   <Carousel className="w-full" setApi={setCarouselApi} opts={{ loop: false }}>
                     <CarouselContent>
                       {previewImages.map((imageUrl, index) => (
-                        <CarouselItem key={index}>
+                        <CarouselItem key={imageUrl}>
                           <div className="relative bg-gray-100 rounded-2xl overflow-hidden">
                             <img
                               src={imageUrl}
                               alt={`Preview ${index + 1}`}
                               className="w-full h-64 object-cover"
                               draggable={false}
+                              onLoad={() => carouselApi?.reInit()}
                             />
                           </div>
                         </CarouselItem>
