@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Plus, ChevronRight, ChevronLeft, Upload } from "lucide-react";
+import { Download, Plus, ChevronRight, ChevronLeft, Upload, Copy, ExternalLink } from "lucide-react";
+
+const PUBLIC_BASE_URL = "https://snapora.lovable.app";
 
 type Step = 1 | 2 | 3;
 
@@ -24,6 +26,7 @@ export default function EventCreation() {
     id: string;
     uploadUrl: string;
   } | null>(null);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
   const generateEventId = () => {
@@ -217,7 +220,7 @@ export default function EventCreation() {
         throw new Error(`Database error: ${dbError.message}`);
       }
 
-      const uploadUrl = `${window.location.origin}/?event=${eventId}`;
+      const uploadUrl = `${PUBLIC_BASE_URL}/?event=${eventId}`;
 
       setCreatedEvent({
         id: eventId,
@@ -267,6 +270,22 @@ export default function EventCreation() {
     img.src = "data:image/svg+xml;base64," + btoa(svgData);
   };
 
+  const handleCopyLink = async () => {
+    if (!createdEvent) return;
+    try {
+      await navigator.clipboard.writeText(createdEvent.uploadUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  };
+
+  const handlePreviewEvent = () => {
+    if (!createdEvent) return;
+    window.open(createdEvent.uploadUrl, "_blank", "noopener,noreferrer");
+  };
+
   const resetForm = () => {
     setCurrentStep(1);
     setEventName("");
@@ -276,6 +295,7 @@ export default function EventCreation() {
     setPosterFile(null);
     setPosterPreview("");
     setCreatedEvent(null);
+    setCopied(false);
   };
 
   return (
@@ -511,6 +531,17 @@ export default function EventCreation() {
             <div className="bg-muted p-3 rounded text-sm">
               <p><strong>Public URL:</strong></p>
               <p className="break-all">{createdEvent.uploadUrl}</p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={handlePreviewEvent} className="flex-1">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Preview Event Page
+              </Button>
+              <Button onClick={handleCopyLink} variant="outline" className="flex-1">
+                <Copy className="w-4 h-4 mr-2" />
+                {copied ? "Link copied!" : "Copy Link"}
+              </Button>
             </div>
 
             <Button onClick={resetForm} className="w-full">
