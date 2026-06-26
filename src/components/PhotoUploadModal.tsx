@@ -351,13 +351,14 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
                   <Carousel className="w-full" setApi={setCarouselApi} opts={{ loop: false }}>
                     <CarouselContent>
                       {previewImages.map((imageUrl, index) => (
-                        <CarouselItem key={index}>
+                        <CarouselItem key={imageUrl}>
                           <div className="relative bg-gray-100 rounded-2xl overflow-hidden">
                             <img
                               src={imageUrl}
                               alt={`Preview ${index + 1}`}
                               className="w-full h-64 object-cover"
                               draggable={false}
+                              onLoad={() => carouselApi?.reInit()}
                             />
                           </div>
                         </CarouselItem>
