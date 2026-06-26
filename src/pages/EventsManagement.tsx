@@ -24,7 +24,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Pencil, XCircle, Trash2, Search } from "lucide-react";
+import { Pencil, XCircle, Trash2, Search, QrCode, ExternalLink } from "lucide-react";
+import EventQRModal from "@/components/EventQRModal";
 
 interface EventRow {
   event_id: string;
