@@ -307,6 +307,7 @@ export default function EventsManagement() {
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
                               Preview
+                            </Button>
                             {isClosed ? (
                               <>
                                 <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed">
