@@ -84,6 +84,18 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     };
   }, [carouselApi]);
 
+  // Re-init carousel and reset to first slide whenever the preview set changes,
+  // so the first slide always renders correctly.
+  useEffect(() => {
+    if (!carouselApi || previewImages.length === 0) return;
+    const id = requestAnimationFrame(() => {
+      carouselApi.reInit();
+      carouselApi.scrollTo(0, true);
+      setCurrentSlide(0);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [carouselApi, previewImages]);
+
   if (!isOpen) return null;
 
   const handleFileUpload = async (files: FileList | null) => {
