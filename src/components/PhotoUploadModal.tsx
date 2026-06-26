@@ -265,6 +265,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.heic,.heif';
+    input.capture = 'environment';
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
       handleFileUpload(files);
