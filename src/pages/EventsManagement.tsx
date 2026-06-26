@@ -456,6 +456,15 @@ export default function EventsManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {qrEvent && (
+        <EventQRModal
+          open={!!qrEvent}
+          onClose={() => setQrEvent(null)}
+          eventId={qrEvent.event_id}
+          displayName={qrEvent.display_name || qrEvent.name || qrEvent.event_id}
+        />
+      )}
     </div>
   );
 }
