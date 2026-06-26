@@ -175,7 +175,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     setUploading(true);
     setUploadProgress(0);
 
-    const files = Array.from(selectedFiles);
+    const files = selectedFiles;
     const totalFiles = files.length;
 
     try {
