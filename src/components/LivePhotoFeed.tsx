@@ -210,35 +210,23 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
             <p className="text-gray-600">Live feed from guests • {photos.length} photos shared</p>
           </div>
           
-          {/* Mobile: strict 2-col square grid. Desktop: 2-row horizontal scroll */}
+          {/* Mobile: strict 2-col square grid. Desktop: 3-col grid with natural aspect ratios */}
           <div className="relative">
-            <div
-              className="
-                grid grid-cols-2 gap-2
-                md:grid-cols-none md:gap-4 md:overflow-x-auto md:pb-4 md:snap-x md:snap-mandatory
-                md:[grid-template-rows:repeat(2,minmax(180px,280px))]
-                md:[grid-auto-flow:column]
-                md:[grid-auto-columns:minmax(180px,280px)]
-              "
-              style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#ec4899 #fce7f3',
-              }}
-            >
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 md:items-start">
               {photos.map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="md:snap-start group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in md:[grid-row:auto] md:h-full"
+                  className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in self-start"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div
-                    className="cursor-pointer w-full h-full aspect-square md:aspect-auto"
+                    className="cursor-pointer w-full aspect-square md:aspect-auto"
                     onClick={() => setSelectedPhoto(photo)}
                   >
                     <img
                       src={photo.thumbnail_url || photo.photo_url}
                       alt={`Event photo ${index + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      className="w-full h-full object-cover md:h-auto md:object-contain md:block transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
                     />
                   </div>
@@ -280,11 +268,6 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Desktop scroll hint only */}
-          <div className="hidden md:block text-center mt-4 text-sm text-gray-500">
-            <p>← Scroll to see more photos →</p>
           </div>
         </div>
       </section>
