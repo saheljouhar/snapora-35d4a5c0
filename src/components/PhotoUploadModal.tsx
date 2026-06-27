@@ -195,29 +195,21 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     if (hasHeic) {
       setConverting(true);
       try {
-        const heic2any = await loadHeic2Any();
-        if (!heic2any) throw new Error('heic2any unavailable');
-
-        processed = await Promise.all(
-          fileArray.map(async (file) => {
-            if (!isHeicFile(file)) return file;
-            const convertedBlob = await heic2any({
-              blob: file,
-              toType: 'image/jpeg',
-              quality: 1,
-            });
-            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-            const baseName = (file.name || `photo_${Date.now()}.heic`).replace(/\.(heic|heif)/gi, '');
-            const newName = `${baseName || `photo_${Date.now()}`}.jpg`;
-            return new File([blob], newName, { type: 'image/jpeg' });
-          })
-        );
+        const converted: File[] = [];
+        for (const file of fileArray) {
+          if (isHeicFile(file)) {
+            converted.push(await convertHeicToJpeg(file));
+          } else {
+            converted.push(file);
+          }
+        }
+        processed = converted;
       } catch (err: any) {
         console.error('HEIC conversion failed:', err);
         setConverting(false);
         toast({
           title: "Conversion failed",
-          description: "Could not convert iPhone photo. Please try a different photo or send it via WhatsApp first then upload.",
+          description: "Could not process this iPhone photo. Please share it via WhatsApp first, save that version, then upload.",
           variant: "destructive",
         });
         return;
