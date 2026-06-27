@@ -14,6 +14,27 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const SUPABASE_URL = 'https://dydzqautscblrrcvlreh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5ZHpxYXV0c2NibHJyY3ZscmVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NTUyMTEsImV4cCI6MjA3MDMzMTIxMX0.ammrjtunik84JOH9pWwy9G0pOfU1aRLyp0SEHpvHZPc';
 
+function loadHeic2Any(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if ((window as any).heic2any) {
+      resolve((window as any).heic2any);
+      return;
+    }
+    const existing = document.querySelector<HTMLScriptElement>('script[data-heic2any]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve((window as any).heic2any));
+      existing.addEventListener('error', () => reject(new Error('Failed to load heic2any')));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+    script.dataset.heic2any = 'true';
+    script.onload = () => resolve((window as any).heic2any);
+    script.onerror = () => reject(new Error('Failed to load heic2any'));
+    document.head.appendChild(script);
+  });
+}
+
 // Upload a file with XHR so we can track progress.
 function uploadWithProgress(
   filePath: string,
@@ -129,39 +150,34 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       return;
     }
 
-    // Detect and convert HEIC/HEIF files
+    // Detect and convert HEIC/HEIF files (check anywhere in filename for double extensions)
     const fileArray = Array.from(files);
-    const hasHeic = fileArray.some((f) => {
+    const isHeicFile = (f: File) => {
       const name = (f.name || '').toLowerCase();
       const type = (f.type || '').toLowerCase();
       return type === 'image/heic' || type === 'image/heif' ||
-        name.endsWith('.heic') || name.endsWith('.heif');
-    });
+        name.includes('.heic') || name.includes('.heif');
+    };
+    const hasHeic = fileArray.some(isHeicFile);
 
     let processed: File[] = fileArray;
     if (hasHeic) {
       setConverting(true);
       try {
-        // Dynamically load heic2any from CDN only when needed
-        const cdnUrl = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-        const heic2anyMod: any = await import(/* @vite-ignore */ cdnUrl);
-        const heic2any = heic2anyMod.default || heic2anyMod;
-
+        const heic2any = await loadHeic2Any();
+        if (!heic2any) throw new Error('heic2any unavailable');
 
         processed = await Promise.all(
           fileArray.map(async (file) => {
-            const name = (file.name || '').toLowerCase();
-            const type = (file.type || '').toLowerCase();
-            const isHeic = type === 'image/heic' || type === 'image/heif' ||
-              name.endsWith('.heic') || name.endsWith('.heif');
-            if (!isHeic) return file;
+            if (!isHeicFile(file)) return file;
             const convertedBlob = await heic2any({
               blob: file,
               toType: 'image/jpeg',
               quality: 1,
             });
             const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-            const newName = (file.name || `photo_${Date.now()}.heic`).replace(/\.(heic|heif)$/i, '.jpg');
+            const baseName = (file.name || `photo_${Date.now()}.heic`).replace(/\.(heic|heif)/gi, '');
+            const newName = `${baseName || `photo_${Date.now()}`}.jpg`;
             return new File([blob], newName, { type: 'image/jpeg' });
           })
         );
@@ -170,7 +186,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
         setConverting(false);
         toast({
           title: "Conversion failed",
-          description: "Could not convert iPhone photo. Please try selecting a different photo or share it via WhatsApp first then upload.",
+          description: "Could not convert iPhone photo. Please try a different photo or send it via WhatsApp first then upload.",
           variant: "destructive",
         });
         return;
