@@ -150,39 +150,34 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       return;
     }
 
-    // Detect and convert HEIC/HEIF files
+    // Detect and convert HEIC/HEIF files (check anywhere in filename for double extensions)
     const fileArray = Array.from(files);
-    const hasHeic = fileArray.some((f) => {
+    const isHeicFile = (f: File) => {
       const name = (f.name || '').toLowerCase();
       const type = (f.type || '').toLowerCase();
       return type === 'image/heic' || type === 'image/heif' ||
-        name.endsWith('.heic') || name.endsWith('.heif');
-    });
+        name.includes('.heic') || name.includes('.heif');
+    };
+    const hasHeic = fileArray.some(isHeicFile);
 
     let processed: File[] = fileArray;
     if (hasHeic) {
       setConverting(true);
       try {
-        // Dynamically load heic2any from CDN only when needed
-        const cdnUrl = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-        const heic2anyMod: any = await import(/* @vite-ignore */ cdnUrl);
-        const heic2any = heic2anyMod.default || heic2anyMod;
-
+        const heic2any = await loadHeic2Any();
+        if (!heic2any) throw new Error('heic2any unavailable');
 
         processed = await Promise.all(
           fileArray.map(async (file) => {
-            const name = (file.name || '').toLowerCase();
-            const type = (file.type || '').toLowerCase();
-            const isHeic = type === 'image/heic' || type === 'image/heif' ||
-              name.endsWith('.heic') || name.endsWith('.heif');
-            if (!isHeic) return file;
+            if (!isHeicFile(file)) return file;
             const convertedBlob = await heic2any({
               blob: file,
               toType: 'image/jpeg',
               quality: 1,
             });
             const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-            const newName = (file.name || `photo_${Date.now()}.heic`).replace(/\.(heic|heif)$/i, '.jpg');
+            const baseName = (file.name || `photo_${Date.now()}.heic`).replace(/\.(heic|heif)/gi, '');
+            const newName = `${baseName || `photo_${Date.now()}`}.jpg`;
             return new File([blob], newName, { type: 'image/jpeg' });
           })
         );
@@ -191,7 +186,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
         setConverting(false);
         toast({
           title: "Conversion failed",
-          description: "Could not convert iPhone photo. Please try selecting a different photo or share it via WhatsApp first then upload.",
+          description: "Could not convert iPhone photo. Please try a different photo or send it via WhatsApp first then upload.",
           variant: "destructive",
         });
         return;
