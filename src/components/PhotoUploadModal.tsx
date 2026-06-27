@@ -14,25 +14,56 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const SUPABASE_URL = 'https://dydzqautscblrrcvlreh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5ZHpxYXV0c2NibHJyY3ZscmVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NTUyMTEsImV4cCI6MjA3MDMzMTIxMX0.ammrjtunik84JOH9pWwy9G0pOfU1aRLyp0SEHpvHZPc';
 
-function loadHeic2Any(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if ((window as any).heic2any) {
-      resolve((window as any).heic2any);
-      return;
-    }
-    const existing = document.querySelector<HTMLScriptElement>('script[data-heic2any]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve((window as any).heic2any));
-      existing.addEventListener('error', () => reject(new Error('Failed to load heic2any')));
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-    script.dataset.heic2any = 'true';
-    script.onload = () => resolve((window as any).heic2any);
-    script.onerror = () => reject(new Error('Failed to load heic2any'));
-    document.head.appendChild(script);
-  });
+async function convertHeicToJpeg(file: File): Promise<File> {
+  // Method 1: Try native browser rendering first
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('No 2d context');
+    ctx.drawImage(bitmap, 0, 0);
+    return await new Promise<File>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(new File([blob], file.name.replace(/\.(heic|heif)(\..+)?$/i, '.jpg'), { type: 'image/jpeg' }));
+        } else {
+          reject(new Error('Canvas conversion failed'));
+        }
+      }, 'image/jpeg', 1.0);
+    });
+  } catch (e) {
+    console.log('Native HEIC failed, trying heic2any:', e);
+  }
+
+  // Method 2: Fall back to heic2any library
+  try {
+    await new Promise<void>((resolve, reject) => {
+      if ((window as any).heic2any) { resolve(); return; }
+      const existing = document.querySelector<HTMLScriptElement>('script[data-heic2any]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve());
+        existing.addEventListener('error', () => reject(new Error('Failed to load heic2any')));
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+      script.dataset.heic2any = 'true';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load heic2any'));
+      document.head.appendChild(script);
+    });
+    const result = await (window as any).heic2any({ blob: file, toType: 'image/jpeg', quality: 1.0 });
+    const blob = Array.isArray(result) ? result[0] : result;
+    return new File([blob], file.name.replace(/\.(heic|heif)(\..+)?$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch (e) {
+    console.log('heic2any failed:', e);
+  }
+
+  // Method 3: Try uploading as-is
+  console.log('All conversions failed, attempting direct upload');
+  return new File([file], file.name, { type: 'image/jpeg' });
 }
 
 // Upload a file with XHR so we can track progress.
@@ -164,29 +195,21 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     if (hasHeic) {
       setConverting(true);
       try {
-        const heic2any = await loadHeic2Any();
-        if (!heic2any) throw new Error('heic2any unavailable');
-
-        processed = await Promise.all(
-          fileArray.map(async (file) => {
-            if (!isHeicFile(file)) return file;
-            const convertedBlob = await heic2any({
-              blob: file,
-              toType: 'image/jpeg',
-              quality: 1,
-            });
-            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-            const baseName = (file.name || `photo_${Date.now()}.heic`).replace(/\.(heic|heif)/gi, '');
-            const newName = `${baseName || `photo_${Date.now()}`}.jpg`;
-            return new File([blob], newName, { type: 'image/jpeg' });
-          })
-        );
+        const converted: File[] = [];
+        for (const file of fileArray) {
+          if (isHeicFile(file)) {
+            converted.push(await convertHeicToJpeg(file));
+          } else {
+            converted.push(file);
+          }
+        }
+        processed = converted;
       } catch (err: any) {
         console.error('HEIC conversion failed:', err);
         setConverting(false);
         toast({
           title: "Conversion failed",
-          description: "Could not convert iPhone photo. Please try a different photo or send it via WhatsApp first then upload.",
+          description: "Could not process this iPhone photo. Please share it via WhatsApp first, save that version, then upload.",
           variant: "destructive",
         });
         return;
