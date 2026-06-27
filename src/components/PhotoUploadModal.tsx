@@ -14,6 +14,27 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const SUPABASE_URL = 'https://dydzqautscblrrcvlreh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5ZHpxYXV0c2NibHJyY3ZscmVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NTUyMTEsImV4cCI6MjA3MDMzMTIxMX0.ammrjtunik84JOH9pWwy9G0pOfU1aRLyp0SEHpvHZPc';
 
+function loadHeic2Any(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if ((window as any).heic2any) {
+      resolve((window as any).heic2any);
+      return;
+    }
+    const existing = document.querySelector<HTMLScriptElement>('script[data-heic2any]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve((window as any).heic2any));
+      existing.addEventListener('error', () => reject(new Error('Failed to load heic2any')));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+    script.dataset.heic2any = 'true';
+    script.onload = () => resolve((window as any).heic2any);
+    script.onerror = () => reject(new Error('Failed to load heic2any'));
+    document.head.appendChild(script);
+  });
+}
+
 // Upload a file with XHR so we can track progress.
 function uploadWithProgress(
   filePath: string,
