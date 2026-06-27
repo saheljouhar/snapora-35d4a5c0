@@ -143,10 +143,10 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       setConverting(true);
       try {
         // Dynamically load heic2any from CDN only when needed
-        const heic2anyMod: any = await import(
-          /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'
-        );
+        const cdnUrl = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+        const heic2anyMod: any = await import(/* @vite-ignore */ cdnUrl);
         const heic2any = heic2anyMod.default || heic2anyMod;
+
 
         processed = await Promise.all(
           fileArray.map(async (file) => {
