@@ -228,22 +228,21 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
               {photos.map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="md:snap-start group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in md:[grid-row:auto]"
+                  className="md:snap-start group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in md:[grid-row:auto] md:h-full"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div
-                    className="cursor-pointer w-full"
-                    style={{ aspectRatio: '1 / 1' }}
+                    className="cursor-pointer w-full h-full aspect-square md:aspect-auto"
                     onClick={() => setSelectedPhoto(photo)}
                   >
                     <img
                       src={photo.thumbnail_url || photo.photo_url}
                       alt={`Event photo ${index + 1}`}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                      style={{ objectFit: 'cover' }}
                       loading="lazy"
                     />
                   </div>
+
 
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
