@@ -41,22 +41,18 @@ export default function EventCreation() {
   };
 
   const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let file = e.target.files?.[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
     const fileType = (file.type || '').toLowerCase();
-
     const rawName = file.name || '';
     const extMatch = rawName.match(/\.([a-zA-Z0-9]+)$/);
     const ext = extMatch ? extMatch[1].toLowerCase() : '';
     const hasValidExt = allowedExts.includes(ext);
     const hasValidType = allowedTypes.includes(fileType);
-    const hasValidName =
-      !!rawName && rawName.toLowerCase() !== 'blob' && hasValidExt;
 
-    // Accept JPEG/JPG by extension even if MIME is inconsistent (some Android phones)
     if (!hasValidType && !hasValidExt) {
       toast({
         title: "Unsupported file",
@@ -66,21 +62,24 @@ export default function EventCreation() {
       return;
     }
 
-    // Wrap blobs from mobile cameras (no name / generic name / missing type) in a safe File
-    if (!hasValidName || !hasValidType) {
-      const safeFile = new File([file], `poster_${Date.now()}.jpg`, {
-        type: 'image/jpeg',
-      });
-      file = safeFile;
-    }
+    // Always wrap in a safe File so mobile camera blobs (no name/type) upload correctly.
+    // Desktop selections with valid name/type pass through unchanged.
+    const safeFile = new File(
+      [file],
+      rawName && rawName !== 'blob' && rawName.includes('.')
+        ? rawName
+        : `poster_${Date.now()}.jpg`,
+      { type: file.type || 'image/jpeg' }
+    );
 
-    setPosterFile(file);
+    setPosterFile(safeFile);
     const reader = new FileReader();
     reader.onloadend = () => {
       setPosterPreview(reader.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(safeFile);
   };
+
 
   // Compress poster image to JPEG (max 1200px on longest side, quality 0.75)
   const compressPoster = (file: File): Promise<Blob> =>
