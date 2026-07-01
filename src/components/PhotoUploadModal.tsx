@@ -181,7 +181,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
         const converted: File[] = [];
         for (const file of fileArray) {
           if (isHeicFile(file)) {
-            converted.push(await convertHeicToJpeg(file));
+            converted.push(await convertHeicServerSide(file));
           } else {
             converted.push(file);
           }
@@ -361,7 +361,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
             {converting ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Converting iPhone photo...</p>
+                <p className="text-gray-600">Converting iPhone photo... this may take a few seconds</p>
               </div>
             ) : uploading ? (
               <div className="text-center py-8">
