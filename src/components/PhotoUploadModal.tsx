@@ -213,12 +213,8 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
       setConverting(false);
     }
 
-
     setSelectedFiles(processed);
   };
-
-
-
 
   const handleConfirmUpload = async () => {
     if (!selectedFiles || !eventId) {
