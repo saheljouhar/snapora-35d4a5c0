@@ -14,56 +14,39 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const SUPABASE_URL = 'https://dydzqautscblrrcvlreh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5ZHpxYXV0c2NibHJyY3ZscmVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NTUyMTEsImV4cCI6MjA3MDMzMTIxMX0.ammrjtunik84JOH9pWwy9G0pOfU1aRLyp0SEHpvHZPc';
 
-async function convertHeicToJpeg(file: File): Promise<File> {
-  // Method 1: Try native browser rendering first
-  try {
-    const bitmap = await createImageBitmap(file);
-    const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('No 2d context');
-    ctx.drawImage(bitmap, 0, 0);
-    return await new Promise<File>((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          resolve(new File([blob], file.name.replace(/\.(heic|heif)(\..+)?$/i, '.jpg'), { type: 'image/jpeg' }));
-        } else {
-          reject(new Error('Canvas conversion failed'));
-        }
-      }, 'image/jpeg', 1.0);
-    });
-  } catch (e) {
-    console.log('Native HEIC failed, trying heic2any:', e);
-  }
+async function convertHeicServerSide(file: File): Promise<File> {
+  const formData = new FormData();
+  formData.append('file', file);
 
-  // Method 2: Fall back to heic2any library
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
   try {
-    await new Promise<void>((resolve, reject) => {
-      if ((window as any).heic2any) { resolve(); return; }
-      const existing = document.querySelector<HTMLScriptElement>('script[data-heic2any]');
-      if (existing) {
-        existing.addEventListener('load', () => resolve());
-        existing.addEventListener('error', () => reject(new Error('Failed to load heic2any')));
-        return;
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/convert-heic`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: formData,
+        signal: controller.signal,
       }
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-      script.dataset.heic2any = 'true';
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load heic2any'));
-      document.head.appendChild(script);
-    });
-    const result = await (window as any).heic2any({ blob: file, toType: 'image/jpeg', quality: 1.0 });
-    const blob = Array.isArray(result) ? result[0] : result;
-    return new File([blob], file.name.replace(/\.(heic|heif)(\..+)?$/i, '.jpg'), { type: 'image/jpeg' });
-  } catch (e) {
-    console.log('heic2any failed:', e);
-  }
+    );
+    clearTimeout(timeout);
 
-  // Method 3: Try uploading as-is
-  console.log('All conversions failed, attempting direct upload');
-  return new File([file], file.name, { type: 'image/jpeg' });
+    if (!response.ok) throw new Error('Server conversion failed');
+
+    const blob = await response.blob();
+    return new File(
+      [blob],
+      file.name.replace(/\.(heic|heif)(\..+)?$/i, '.jpg'),
+      { type: 'image/jpeg' }
+    );
+  } catch (error) {
+    clearTimeout(timeout);
+    throw error;
+  }
 }
 
 // Upload a file with XHR so we can track progress.
@@ -198,7 +181,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
         const converted: File[] = [];
         for (const file of fileArray) {
           if (isHeicFile(file)) {
-            converted.push(await convertHeicToJpeg(file));
+            converted.push(await convertHeicServerSide(file));
           } else {
             converted.push(file);
           }
@@ -378,7 +361,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
             {converting ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Converting iPhone photo...</p>
+                <p className="text-gray-600">Converting iPhone photo... this may take a few seconds</p>
               </div>
             ) : uploading ? (
               <div className="text-center py-8">
