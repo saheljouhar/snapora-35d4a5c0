@@ -139,6 +139,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_photo_likes: { Args: { photo_id: string }; Returns: undefined }
       get_event_poster: { Args: { event_id_param: string }; Returns: string }
       has_role: {
         Args: {

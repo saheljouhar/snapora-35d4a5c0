@@ -118,11 +118,8 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
           )
         );
 
-        // Update in database
-        const { error } = await supabase
-          .from('event_photos')
-          .update({ likes: Math.max(0, currentPhoto.likes - 1) })
-          .eq('id', photoId);
+        // Use validated RPC (decrements by exactly 1, never below 0)
+        const { error } = await supabase.rpc('decrement_photo_likes', { photo_id: photoId });
 
         if (error) {
           console.error('Error unliking photo:', error);
@@ -150,11 +147,8 @@ const LivePhotoFeed = ({ eventId, eventName }: LivePhotoFeedProps) => {
           )
         );
 
-        // Update in database
-        const { error } = await supabase
-          .from('event_photos')
-          .update({ likes: currentPhoto.likes + 1 })
-          .eq('id', photoId);
+        // Use validated RPC (increments by exactly 1)
+        const { error } = await supabase.rpc('increment_photo_likes', { photo_id: photoId });
 
         if (error) {
           console.error('Error liking photo:', error);
