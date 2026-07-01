@@ -108,6 +108,21 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!selectedFiles || selectedFiles.length === 0) {
+      setPreviewImages([]);
+      return;
+    }
+
+    const urls = selectedFiles.map((file) => URL.createObjectURL(file));
+    setPreviewImages(urls);
+    setCurrentSlide(0);
+
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [selectedFiles]);
+
+  useEffect(() => {
     if (!carouselApi) return;
     setCurrentSlide(carouselApi.selectedScrollSnap());
     const onSelect = () => setCurrentSlide(carouselApi.selectedScrollSnap());
@@ -119,14 +134,12 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
     };
   }, [carouselApi]);
 
-  // Re-init carousel and reset to first slide whenever the preview set changes,
-  // so the first slide always renders correctly.
+  // Re-init carousel whenever the preview set changes so slides are measured correctly.
   useEffect(() => {
     if (!carouselApi || previewImages.length === 0) return;
     const id = requestAnimationFrame(() => {
       carouselApi.reInit();
       carouselApi.scrollTo(0, true);
-      setCurrentSlide(0);
     });
     return () => cancelAnimationFrame(id);
   }, [carouselApi, previewImages]);
