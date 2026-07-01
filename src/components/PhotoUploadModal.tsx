@@ -215,9 +215,9 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, eventId }: PhotoUploadMod
 
 
     setSelectedFiles(processed);
-    const previewUrls = processed.map((f) => URL.createObjectURL(f));
-    setPreviewImages(previewUrls);
   };
+
+
 
 
   const handleConfirmUpload = async () => {
