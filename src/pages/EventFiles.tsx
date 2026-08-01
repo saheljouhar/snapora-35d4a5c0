@@ -354,7 +354,7 @@ export default function EventFiles() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEvents.length === 0 ? (
+              {sortedEvents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
                     <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
@@ -366,7 +366,7 @@ export default function EventFiles() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEvents.map((event) => (
+                sortedEvents.map((event) => (
                   <TableRow key={event.event_id}>
                     <TableCell>
                       <div>
