@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { Pencil, XCircle, Trash2, Search, QrCode, ExternalLink } from "lucide-react";
 import EventQRModal from "@/components/EventQRModal";
+import EventPhotosModal from "@/components/EventPhotosModal";
 
 interface EventRow {
   event_id: string;
@@ -63,6 +64,7 @@ export default function EventsManagement() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [qrEvent, setQrEvent] = useState<EventRow | null>(null);
+  const [photosEvent, setPhotosEvent] = useState<EventRow | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -264,7 +266,15 @@ export default function EventsManagement() {
                           </div>
                         </TableCell>
                         <TableCell>{formatDateDMY(event.date)}</TableCell>
-                        <TableCell>{event.photoCount}</TableCell>
+                        <TableCell>
+                          <button
+                            type="button"
+                            onClick={() => setPhotosEvent(event)}
+                            className="underline underline-offset-2 hover:opacity-70"
+                          >
+                            {event.photoCount}
+                          </button>
+                        </TableCell>
                         <TableCell>
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -463,6 +473,17 @@ export default function EventsManagement() {
           onClose={() => setQrEvent(null)}
           eventId={qrEvent.event_id}
           displayName={qrEvent.display_name || qrEvent.name || qrEvent.event_id}
+        />
+      )}
+
+      {photosEvent && (
+        <EventPhotosModal
+          open={!!photosEvent}
+          onClose={() => setPhotosEvent(null)}
+          eventId={photosEvent.event_id}
+          displayName={
+            photosEvent.display_name || photosEvent.name || photosEvent.event_id
+          }
         />
       )}
     </div>

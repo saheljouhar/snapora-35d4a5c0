@@ -18,6 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type SortOption = "newest" | "oldest" | "photos" | "az";
 
 interface Event {
   event_id: string;
@@ -36,6 +45,7 @@ export default function EventFiles() {
   const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -287,6 +297,20 @@ export default function EventFiles() {
     );
   });
 
+  const eventLabel = (e: Event) => (e.display_name || e.name || e.event_id || "").toLowerCase();
+  const dateValue = (e: Event) => (e.date ? new Date(e.date).getTime() : NaN);
+
+  const sortedEvents = [...filteredEvents].sort((a, b) => {
+    if (sortBy === "photos") return (b.photoCount || 0) - (a.photoCount || 0);
+    if (sortBy === "az") return eventLabel(a).localeCompare(eventLabel(b));
+    const da = dateValue(a);
+    const db = dateValue(b);
+    if (Number.isNaN(da) && Number.isNaN(db)) return 0;
+    if (Number.isNaN(da)) return 1;
+    if (Number.isNaN(db)) return -1;
+    return sortBy === "oldest" ? da - db : db - da;
+  });
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -295,17 +319,30 @@ export default function EventFiles() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Closed Events ({filteredEvents.length})</CardTitle>
+          <CardTitle>Closed Events ({sortedEvents.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by event name or ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by event name or ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="photos">Most photos</SelectItem>
+                <SelectItem value="az">A-Z</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Table>
             <TableHeader>
@@ -317,7 +354,7 @@ export default function EventFiles() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEvents.length === 0 ? (
+              {sortedEvents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
                     <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
@@ -329,7 +366,7 @@ export default function EventFiles() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEvents.map((event) => (
+                sortedEvents.map((event) => (
                   <TableRow key={event.event_id}>
                     <TableCell>
                       <div>
