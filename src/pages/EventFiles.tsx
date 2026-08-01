@@ -18,6 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type SortOption = "newest" | "oldest" | "photos" | "az";
 
 interface Event {
   event_id: string;
@@ -36,6 +45,7 @@ export default function EventFiles() {
   const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const { toast } = useToast();
 
   useEffect(() => {
