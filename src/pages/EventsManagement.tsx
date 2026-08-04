@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { Pencil, XCircle, Trash2, Search, QrCode, ExternalLink } from "lucide-react";
 import EventQRModal from "@/components/EventQRModal";
 import EventPhotosModal from "@/components/EventPhotosModal";
+import EventEditExtras from "@/components/EventEditExtras";
 
 interface EventRow {
   event_id: string;
