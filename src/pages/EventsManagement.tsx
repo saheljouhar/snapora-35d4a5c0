@@ -254,7 +254,6 @@ export default function EventsManagement() {
               ) : (
                 filteredEvents.map((event) => {
                   const isClosed = event.status === "closed";
-                  const isEditing = editingId === event.event_id;
                   return (
                     <Fragment key={event.event_id}>
                       <TableRow>
@@ -292,10 +291,10 @@ export default function EventsManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => (isEditing ? closeEdit() : openEdit(event))}
+                              onClick={() => navigate(`/admin/events/${event.event_id}/edit`)}
                             >
                               <Pencil className="w-4 h-4 mr-2" />
-                              {isEditing ? "Close" : "Edit"}
+                              Edit
                             </Button>
                             <Button
                               variant="secondary"
@@ -350,69 +349,6 @@ export default function EventsManagement() {
                         </TableCell>
                       </TableRow>
 
-                      {isEditing && (
-                        <TableRow className="bg-muted/40">
-                          <TableCell colSpan={5}>
-                            <div className="p-4 space-y-4">
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                  <Label htmlFor={`name-${event.event_id}`}>Display name</Label>
-                                  <Input
-                                    id={`name-${event.event_id}`}
-                                    value={editDisplayName}
-                                    onChange={(e) => setEditDisplayName(e.target.value)}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`date-${event.event_id}`}>Event date</Label>
-                                  <Input
-                                    id={`date-${event.event_id}`}
-                                    type="date"
-                                    value={editDate || ""}
-                                    onChange={(e) => setEditDate(e.target.value)}
-                                  />
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`desc-${event.event_id}`}>Description</Label>
-                                <Textarea
-                                  id={`desc-${event.event_id}`}
-                                  value={editDescription}
-                                  onChange={(e) => setEditDescription(e.target.value)}
-                                />
-                              </div>
-                              {saveError && (
-                                <p className="text-red-600 text-sm font-medium">{saveError}</p>
-                              )}
-                              <div className="flex justify-end gap-2">
-                                <Button onClick={saveEdit} disabled={saving}>
-                                  {saving ? "Saving..." : "Save Changes"}
-                                </Button>
-                              </div>
-
-                              <EventEditExtras
-                                eventId={event.event_id}
-                                onPhotoCountChange={(count) =>
-                                  setEvents((prev) =>
-                                    prev.map((e) =>
-                                      e.event_id === event.event_id
-                                        ? { ...e, photoCount: count }
-                                        : e
-                                    )
-                                  )
-                                }
-                              />
-
-                              <div className="flex justify-end pt-2">
-                                <Button variant="outline" onClick={closeEdit} disabled={saving}>
-                                  Cancel
-                                </Button>
-                              </div>
-
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
                     </Fragment>
                   );
                 })
