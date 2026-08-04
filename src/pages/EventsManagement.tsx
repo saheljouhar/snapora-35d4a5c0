@@ -1,4 +1,5 @@
 import { useEffect, useState, Fragment } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,14 +51,9 @@ const formatDateDMY = (d: string | null) => {
 };
 
 export default function EventsManagement() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDisplayName, setEditDisplayName] = useState("");
-  const [editDate, setEditDate] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmCloseEvent, setConfirmCloseEvent] = useState<EventRow | null>(null);
   const [closing, setClosing] = useState(false);
   const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<EventRow | null>(null);
@@ -107,56 +103,6 @@ export default function EventsManagement() {
 
     setEvents(withCounts);
     setLoading(false);
-  };
-
-  const openEdit = (event: EventRow) => {
-    setEditingId(event.event_id);
-    setEditDisplayName(event.display_name || event.name || "");
-    setEditDate(event.date || "");
-    setEditDescription(event.description || "");
-    setSaveError(null);
-  };
-
-  const closeEdit = () => {
-    setEditingId(null);
-    setSaveError(null);
-  };
-
-  const saveEdit = async () => {
-    if (!editingId) return;
-    setSaving(true);
-    setSaveError(null);
-
-    const { error } = await supabase
-      .from("Events")
-      .update({
-        display_name: editDisplayName,
-        date: editDate || null,
-        description: editDescription || null,
-      })
-      .eq("event_id", editingId);
-
-    setSaving(false);
-
-    if (error) {
-      setSaveError(error.message);
-      return;
-    }
-
-    toast.success("Event updated.");
-    setEvents((prev) =>
-      prev.map((e) =>
-        e.event_id === editingId
-          ? {
-              ...e,
-              display_name: editDisplayName,
-              date: editDate || null,
-              description: editDescription || null,
-            }
-          : e
-      )
-    );
-    closeEdit();
   };
 
   const handleCloseEvent = async () => {
