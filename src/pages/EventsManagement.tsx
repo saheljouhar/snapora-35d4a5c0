@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { Pencil, XCircle, Trash2, Search, QrCode, ExternalLink } from "lucide-react";
 import EventQRModal from "@/components/EventQRModal";
 import EventPhotosModal from "@/components/EventPhotosModal";
+import EventEditExtras from "@/components/EventEditExtras";
 
 interface EventRow {
   event_id: string;
@@ -384,13 +385,30 @@ export default function EventsManagement() {
                                 <p className="text-red-600 text-sm font-medium">{saveError}</p>
                               )}
                               <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={closeEdit} disabled={saving}>
-                                  Cancel
-                                </Button>
                                 <Button onClick={saveEdit} disabled={saving}>
                                   {saving ? "Saving..." : "Save Changes"}
                                 </Button>
                               </div>
+
+                              <EventEditExtras
+                                eventId={event.event_id}
+                                onPhotoCountChange={(count) =>
+                                  setEvents((prev) =>
+                                    prev.map((e) =>
+                                      e.event_id === event.event_id
+                                        ? { ...e, photoCount: count }
+                                        : e
+                                    )
+                                  )
+                                }
+                              />
+
+                              <div className="flex justify-end pt-2">
+                                <Button variant="outline" onClick={closeEdit} disabled={saving}>
+                                  Cancel
+                                </Button>
+                              </div>
+
                             </div>
                           </TableCell>
                         </TableRow>

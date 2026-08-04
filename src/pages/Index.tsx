@@ -51,6 +51,19 @@ const Index = () => {
     };
   }, [eventId]);
 
+  // Silent visit tracking — never blocks page load or surfaces errors to guests
+  useEffect(() => {
+    if (!eventId) return;
+    supabase
+      .from('event_visits')
+      .insert({ event_id: eventId })
+      .then(({ error }) => {
+        if (error) console.debug('Visit tracking skipped:', error.message);
+      });
+  }, [eventId]);
+
+
+
   useEffect(() => {
     // Get event ID from URL parameter
     const urlParams = new URLSearchParams(window.location.search);

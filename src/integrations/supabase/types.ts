@@ -83,6 +83,24 @@ export type Database = {
         }
         Relationships: []
       }
+      event_visits: {
+        Row: {
+          event_id: string
+          id: string
+          visited_at: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          visited_at?: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
       Events: {
         Row: {
           date: string | null
